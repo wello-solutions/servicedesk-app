@@ -1,0 +1,130 @@
+/* Tab styling */
+.tabs {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #f1f1f1;
+  border: 1px solid #ddd;
+  border-radius: 5px 5px 0 0;
+  margin-right: 5px;
+}
+
+.tabs button.active {
+  background-color: #fff;
+  border-bottom: none;
+  font-weight: bold;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.table th,
+.table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.table th {
+  background-color: #4d002e;
+  font-weight: bold;
+  color: #fff;
+}
+
+
+.search-filter-container {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filter-row input[type="text"], .filter-row select, .filter-buttons button {
+  padding: 5px 10px;
+    border: none;
+    box-shadow: 10px 0px 10px 0px #ddd;
+    border-radius: 5px;
+    font-size: 15px;
+    font-weight: 400;
+    color: #191919;
+}
+
+.filter-buttons button {
+  background: #4d002e;
+  color: #fff;
+  border: 1px solid;
+}
+
+.filter-row label {
+  font-weight: 500;
+  color: #191919;
+}
+
+.checkbox-container {
+  padding: 10px;
+}
+
+.highlight {
+  background: #ffcccb;
+  border-radius: 50%;
+}
+
+/* Custom styles for react-calendar component */
+.react-calendar {
+  width: 100%;
+  max-width: 500px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+.react-calendar__navigation {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.react-calendar__tile {
+  padding: 12px 0;
+  font-size: 14px;
+  color: #1f2937; /* Gray-800 */
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.react-calendar__tile:enabled:hover {
+  background-color: #e0f2fe; /* Blue-100 */
+}
+
+.react-calendar__tile--now {
+  background-color: #eff6ff; /* Blue-50 */
+  font-weight: bold;
+  color: #3b82f6; /* Blue-500 */
+}
+
+.react-calendar__tile--active {
+  background-color: #3b82f6; /* Blue-500 */
+  color: white;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #6b7280; /* Gray-500 */
+}
+
+abbr:where([title]) {
+  text-decoration: none;
+}
