@@ -61,7 +61,7 @@ const ForgotPassword = () => {
           <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
             Send Reset Link
           </button>
-          <button
+          <button type="button"
             onClick={() => navigate(-1)} // Navigate back one step in history
             className="w-full bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 mt-2"
           >

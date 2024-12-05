@@ -103,6 +103,7 @@ const CreateUser = () => {
             Submit
           </button>
           <button
+            type='button'
             onClick={() => navigate('/login')} // Navigate back one step in history
             className="w-full bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 mt-2"
           >

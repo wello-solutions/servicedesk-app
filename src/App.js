@@ -23,11 +23,16 @@ import './App.css';
 
 function AppContent() {
   const location = useLocation();
+
+  const shouldRenderNavigation = () => {
+    const pathsWithoutNav = ['/login', '/forgot-password', '/create-user'];
+    return !pathsWithoutNav.includes(location.pathname);
+  };
+
   
   return (
     <>
-      {/* Only render Navigation if not on the /login page */}
-      {location.pathname !== '/login' && location.pathname !== '/forgot-password' && location.pathname !== '/create-user' && <Navigation />}
+      {shouldRenderNavigation() && <Navigation />}
       
       <Routes>
         <Route path="/login" element={<Login />} />
