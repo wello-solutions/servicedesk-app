@@ -11,10 +11,6 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  useEffect(() => { 
-    setDomain("testnative2"); 
-  }, []);
-
   const handleSubmit = (e) => {
     e.preventDefault()
     if (rememberMe) {
@@ -33,7 +29,7 @@ const Login = () => {
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-8">Sign in to your account</h2>
             <form className="space-y-6" onSubmit={handleSubmit}>
-              {/* <div>
+              <div>
                 <label htmlFor="domain" className="block text-sm font-medium text-gray-700">
                   Domain
                 </label>
@@ -48,7 +44,7 @@ const Login = () => {
                     onChange={(e) => setDomain(e.target.value)}
                   />
                 </div>
-              </div> */}
+              </div> 
               
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -116,11 +112,11 @@ const Login = () => {
                   Sign in
                 </button>
               </div>
-              <div className='text-center'>
+              { /*<div className='text-center'>
                 <Link to="/create-user" className="font-medium text-indigo-600 hover:text-indigo-500">
                     Don't have an account?
                 </Link>
-              </div>
+              </div> */ }
             </form>
           </div>
         </div>
