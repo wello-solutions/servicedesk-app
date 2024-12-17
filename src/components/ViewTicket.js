@@ -79,7 +79,7 @@ const SingleTicket = () => {
         const response = await axios(config);
         const imageObjectURL = URL.createObjectURL(response.data); 
         setFile(imageObjectURL);
-        console.log(imageObjectURL);
+        //console.log(imageObjectURL);
       } catch (err) {
         console.error("Error fetching thumbnail:", err);
         setError('Failed to fetch thumbnail.');
