@@ -13,8 +13,8 @@ const Navigation = () => {
 
   useEffect(() => {
     const fetchContactCount = async () => {
+      const auth = JSON.parse(sessionStorage.getItem('auth'));
       try {
-        const auth = JSON.parse(sessionStorage.getItem('auth'));
         const responseUser = await fetchData(`https://V1servicedeskapi.wello.solutions/api/Contact?$filter=e_login+eq+'${encodeURIComponent(auth.email)}'`, 'GET');
         setUser(responseUser.value[0]);
         setLoading(false);

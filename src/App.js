@@ -12,7 +12,6 @@ import ViewTicket from './components/ViewTicket';
 import ViewWorkOrder from './components/ViewWorkOrder';
 import ViewWorkOrderList from './components/ViewWorkOrderList';
 import ViewUserList from './components/ViewUserList';
-import CreateUser from './components/CreateUser';
 import ViewInstallations from './components/ViewInstallations';
 import ViewInstallationsSingle from './components/ViewInstallationsSingle';
 import ViewDocuments from './components/ViewDocuments';
@@ -25,7 +24,7 @@ function AppContent() {
   const location = useLocation();
 
   const shouldRenderNavigation = () => {
-    const pathsWithoutNav = ['/login', '/forgot-password', '/create-user'];
+    const pathsWithoutNav = ['/login', '/forgot-password', '/login/', '/forgot-password/'];
     return !pathsWithoutNav.includes(location.pathname);
   };
 
@@ -37,7 +36,6 @@ function AppContent() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgetPassword />} />
-        <Route path="/create-user" element={<CreateUser />} />
         <Route
           path="/"
           element={
