@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchData } from '../services/apiService.js';
-import banner_img from '../src/images/servicedesk_banner.png';
 
 const Home = () => {
   const [contactCount, setContactCount] = useState(null); 
@@ -39,7 +38,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="relative h-48 md:h-64 w-full">
-        <img src={ banner_img } alt="Banner" className="w-full" /> 
+        <img src="https://servicedesk.wello.solutions/images/sd_default_banner.png" alt="Banner" className="w-full" /> 
       </div>
       <main className="container mx-auto px-8 py-8">
         <div className="grid md:grid-cols-4 gap-6">

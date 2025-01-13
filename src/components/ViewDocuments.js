@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useTable, usePagination } from 'react-table';
 import { fetchData } from '../services/apiService.js';
 import { useNavigate } from 'react-router-dom';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 import Select from 'react-select';
 import makeAnimated from 'react-select/animated';
@@ -51,6 +53,7 @@ const ViewDocuments = () => {
   const [fileType, setFileType] = useState([]);
   const [object, setObject] = useState([]);
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState([]);
 
   // Debounced states
   const [debouncedKeyword, setDebouncedKeyword] = useState(keyword);
@@ -136,28 +139,135 @@ const ViewDocuments = () => {
     fetchInstallations();
   }, [debouncedKeyword, debouncedLocation, debouncedStreet, debouncedCity, date, fileType, object, includeArchived]);
 
-  const columns = useMemo(
-    () => [
-      { Header: 'Object', accessor: 'object_type' },
-      { Header: 'Object Name', 
-        Cell: ({ row }) => (
-          <a href={`./ticket/${row.original.object_id}`} className="text-indigo-600 hover:underline">
-            {row.original.object_name}
-          </a>
-        ),
-      },
-      { Header: 'File Type', accessor: 'file_extention' },
-      { Header: 'File Name', 
-        Cell: ({ row }) => (
-          <a href={`https://servicedeskapi.wello.solutions/api/DbFileView/View/${row.original.file_name.replace(/[^a-zA-Z ]/g, "")}?id=${row.original.id}&token=${authKey}`} className="text-indigo-600 hover:underline" target="_blank" rel="noreferrer">
-            {row.original.file_name}
-          </a>
-        ),
-      },
-      { Header: 'Upload When', accessor: 'date_add', Cell: ({ value }) => new Date(value).toLocaleDateString() },
-    ],
-    [authKey]
-  );
+  const columns = useMemo(() => [
+    {
+      Header: '',
+      id: '1', // Unique ID for this column
+      Cell: ({ row }) => (
+        <input
+          type="checkbox"
+          onChange={() => toggleFileSelection(row.original)}
+          checked={selectedFiles.some((file) => file.id === row.original.id)}
+        />
+      ),
+      disableSortBy: true,
+    },
+    { Header: 'Object', accessor: 'object_type' },
+    {
+      Header: 'Object Name',
+      Cell: ({ row }) => (
+        <a
+          href={`./ticket/${row.original.object_id}`}
+          className="text-indigo-600 hover:underline"
+        >
+          {row.original.object_name}
+        </a>
+      ),
+    },
+    { Header: 'File Type', accessor: 'file_extention' },
+    {
+      Header: 'File Name',
+      Cell: ({ row }) => (
+        <a
+          href={`https://servicedeskapi.wello.solutions/api/DbFileView/View/${row.original.file_name.replace(
+            /[^a-zA-Z ]/g,
+            ''
+          )}?id=${row.original.id}&token=${authKey}`}
+          className="text-indigo-600 hover:underline"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {row.original.file_name}
+        </a>
+      ),
+    },
+    { Header: 'Upload When', accessor: 'date_add', Cell: ({ value }) => new Date(value).toLocaleDateString() },
+  ], [authKey, selectedFiles]);
+
+  const toggleFileSelection = (file) => {
+    setSelectedFiles((prev) =>
+      prev.some((f) => f.id === file.id)
+        ? prev.filter((f) => f.id !== file.id)
+        : [...prev, file]
+    );
+  };
+
+  const handleDownloadAll = async () => {
+    const zip = new JSZip(); // Create a new ZIP instance
+  
+    for (const file of contacts) {
+      try {
+        const url = `https://servicedeskapi.wello.solutions/api/DbFileView/View/${file.file_name.replace(
+          /[^a-zA-Z ]/g,
+          ''
+        )}?id=${file.id}&token=${authKey}`;
+  
+        // Fetch the file content
+        const response = await fetch(url, { method: 'GET' });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch file: ${file.file_name}`);
+        }
+  
+        const blob = await response.blob();
+        const arrayBuffer = await blob.arrayBuffer();
+  
+        // Add the file to the ZIP archive
+        zip.file(file.file_name || 'file', arrayBuffer);
+      } catch (error) {
+        console.error(`Error fetching file ${file.file_name}:`, error.message);
+      }
+    }
+  
+    // Generate the ZIP archive and trigger the download
+    zip.generateAsync({ type: 'blob' }).then((content) => {
+      const blobUrl = window.URL.createObjectURL(content);
+  
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = 'files.zip'; // Name of the ZIP file
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  
+      // Revoke the object URL to free up memory
+      window.URL.revokeObjectURL(blobUrl);
+    });
+  };
+
+  const handleDownloadSelected = async () => {
+    if (selectedFiles.length === 0) {
+      alert('No files selected for download.');
+      return;
+    }
+  
+    const zip = new JSZip();
+  
+    try {
+      await Promise.all(
+        selectedFiles.map(async (file) => {
+          const response = await fetch(
+            `https://V1servicedeskapi.wello.solutions/api/DbFileView/View/${file.file_name.replace(
+              /[^a-zA-Z ]/g,)}?id=${file.id}&token=${authKey}`
+          );
+  
+          if (!response.ok) {
+            throw new Error(`Failed to download ${file.file_name}`);
+          }
+  
+          const blob = await response.blob();
+          zip.file(file.file_name, blob);
+        })
+      );
+  
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      saveAs(zipBlob, 'SelectedFiles.zip');
+    } catch (error) {
+      console.error('Error downloading files:', error);
+      alert('Failed to download selected files.');
+    }
+  };
+  
 
   const handleReset = () => {
     setKeyword('');
@@ -174,7 +284,7 @@ const ViewDocuments = () => {
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    page, 
+    page,
     prepareRow,
     canPreviousPage,
     canNextPage,
@@ -295,8 +405,20 @@ const ViewDocuments = () => {
             className="w-full border border-gray-300 rounded-md"
           />
         </div>
-        <div className="flex items-end">
+        <div className="flex items-end gap-x-2">
           <button onClick={handleReset} className="bg-gray-300 text-black rounded-md px-4 py-2 ml-2">Reset</button>
+          <button
+          onClick={handleDownloadSelected}
+          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+        >
+          Download
+        </button>
+        <button
+          onClick={handleDownloadAll}
+          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
+        >
+          Download All
+        </button>
         </div>
       </div>
 
