@@ -17,6 +17,17 @@ const ViewInstallations = () => {
   const [status, setStatus] = useState('All');
   const [includeArchived, setIncludeArchived] = useState(false);
 
+  const statusColors = useMemo(() => ({
+        "In Progress": "bg-yellow-500 text-white",
+        "Planned": "bg-blue-500 text-white",
+        "To be Planned": "bg-purple-500 text-white",
+        "Out of production": "bg-orange-500 text-white",
+        "Active": "bg-green-500 text-white",
+        "Ready for Review": "bg-indigo-500 text-white",
+        "Proactive": "bg-red-500 text-white",
+        "Completed": "bg-pink-500 text-white",
+      }), []);
+
   useEffect(() => {
     const fetchInstallations = async () => {
       try {
@@ -48,9 +59,15 @@ const ViewInstallations = () => {
       { Header: 'Model', accessor: 'equipment_model_name' },
       { Header: 'Serial Number', accessor: 'serial_number' },
       { Header: 'Barcode', accessor: 'barcode' },
-      { Header: 'Status', accessor: 'project_status_name' },
+      { Header: 'Status', accessor: 'project_status_name', 
+        Cell: ({ row }) => (
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.project_status_name] || "bg-gray-300"}`}>
+                {row.original.project_status_name}
+          </span>
+        ),
+      },
     ],
-    []
+    [statusColors]
   );
 
   // Filtered data based on search criteria

@@ -131,9 +131,9 @@ const SingleTicket = () => {
       </div>
 
       {activeTab === 'details' ? (
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-              <h4 className="text-lg font-semibold">Location and Equipment</h4>
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div className='shadow-md rounded-lg p-4 '>
+              <h4 className="text-lg font-semibold pb-2">Location and Equipment</h4>
               <ul className="list-none list-inside text-gray-700">
                 <li>{ticket?.project_name}</li>
                 <li>{ticket?.project_db_address_street}</li>
@@ -141,30 +141,30 @@ const SingleTicket = () => {
               </ul>
             </div>
 
-            <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-              <h4 className="text-lg font-semibold">Created By</h4>
+            <div className='shadow-md rounded-lg p-4 '>
+              <h4 className="text-lg font-semibold pb-2">Created By</h4>
               <ul className="list-none list-inside text-gray-700">
                 <li>{ticket?.contact_fullname}</li>
-                <li>{new Date(ticket?.date_update).toLocaleString()}</li>
+                <li>{new Date(ticket?.date_update).toLocaleString('nl-BE')}</li>
               </ul>
             </div>
 
-            <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-              <h4 className="text-lg font-semibold">Assigned To</h4>
+            <div className='shadow-md rounded-lg p-4 '>
+              <h4 className="text-lg font-semibold pb-2">Assigned To</h4>
               <ul className="list-none list-inside text-gray-700">
                 <li>{ticket?.assigned_to_name || 'Not Assigned'}</li>
               </ul>
             </div>
 
-            <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-              <h4 className="text-lg font-semibold">Type and Status</h4>
+            <div className='shadow-md rounded-lg p-4 '>
+              <h4 className="text-lg font-semibold pb-2">Type and Status</h4>
               <ul className="list-none list-inside text-gray-700">
                 <li>{ticket?.task_type_name} - {ticket?.task_priority_name}</li>
                 <li>{ticket?.task_status_description}</li>
               </ul>
             </div>
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-            <h4 className="text-lg font-semibold">Description</h4>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Description</h4>
             <p className="mb-4">{ticket?.remark}</p>
           </div>
         </div>
@@ -180,7 +180,7 @@ const SingleTicket = () => {
               doc.map(item => (
                 <div key={item.id} className="p-4">
                   <h3 className="font-bold">{item.name}</h3>
-                  <p className="text-gray-500">{new Date(item.date_add).toLocaleString()}</p>
+                  <p className="text-gray-500">{new Date(item.date_add).toLocaleString('nl-BE')}</p>
                   <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'> 
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
                     <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z"/>

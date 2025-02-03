@@ -10,6 +10,23 @@ const ViewTicketList = () => {
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState('open');
 
+  const statusColors = useMemo(() => ({
+      "In Progress": "bg-yellow-500 text-white",
+      "Planned": "bg-blue-500 text-white",
+      "To be Planned": "bg-purple-500 text-white",
+      "Escalated to WO": "bg-orange-500 text-white",
+      "Open": "bg-green-500 text-white",
+      "Ready for Review": "bg-indigo-500 text-white",
+      "Cancelled": "bg-red-500 text-white",
+      "Completed": "bg-pink-500 text-white",
+    }), []);
+  
+    const taskType = useMemo(() => ({
+      "Repair request": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+      "Maintenance": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+      "Installation": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+    }), []);
+
   useEffect(() => {
     const fetchTickets = async () => {
       try {
@@ -31,29 +48,45 @@ const ViewTicketList = () => {
         Header: 'Reference',
         accessor: 'id2',
         Cell: ({ row }) => (
-          <a href={`./ticket/${row.original.id}`} className="text-indigo-600 hover:underline">
+          <a href={`./ticket/${row.original.id}`} className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
             {row.original.id2}
           </a>
         ),
       },
-      { Header: 'Created on', accessor: 'date_create', Cell: ({ value }) => new Date(value).toLocaleDateString() },
-      { Header: 'Status', accessor: 'task_status_name' },
+      { Header: 'Created on', accessor: 'date_create', Cell: ({ value }) => new Date(value).toLocaleDateString('nl-BE') },
+      { Header: 'Status', accessor: 'task_status_name', 
+        Cell: ({ row }) => (
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.task_status_name] || "bg-gray-300"}`}>
+                {row.original.task_status_name}
+          </span>
+        ),
+      },
       { Header: 'Assigned to', accessor: 'assigned_to_user_fullname' },
       { Header: 'Name', accessor: 'subject' },
-      { Header: 'Type', accessor: 'task_type_name' },
+      { Header: 'Type', accessor: 'task_type_name',
+        Cell: ({ row }) => (
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${taskType[row.original.task_type_name] || "bg-gray-300"}`}>
+                {row.original.task_type_name}
+          </span>
+        ),
+      },
     ],
-    []
+    [taskType, statusColors]
   );
 
   const filteredTickets = useMemo(() => {
-    return tickets.filter(ticket => {
-      if (selectedTab === 'open') {
-        return ticket.task_status_name === 'Open';
-      } else {
-        return ticket.task_status_name !== 'Open';
-      }
-    });
+    return tickets
+      .filter(ticket => {
+        // Filter by selected tab (open vs. closed)
+        if (selectedTab === 'open') {
+          return ticket.task_status_name === 'Open';
+        } else {
+          return ticket.task_status_name !== 'Open';
+        }
+      })
+      .sort((a, b) => b.id2 - a.id2); // Sort descending by id2
   }, [tickets, selectedTab]);
+
 
   const {
     getTableProps,
@@ -118,7 +151,7 @@ const ViewTicketList = () => {
           Completed Tickets
         </button>
       </div>
-
+ 
       <div className="overflow-x-auto">
         <table {...getTableProps()} className="min-w-full divide-y divide-gray-200 border border-gray-300">
           <thead className="bg-gray-100">

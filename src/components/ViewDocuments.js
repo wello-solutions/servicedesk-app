@@ -65,6 +65,19 @@ const ViewDocuments = () => {
   const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
   const authKey = btoa(authString);
 
+  const fileExtn = useMemo(() => ({
+      "PDF": "bg-yellow-500 text-white",
+      "PNG": "bg-blue-500 text-white",
+      "ZIP": "bg-purple-500 text-white",
+      "TXT": "bg-orange-500 text-white",
+      "DOCX": "bg-green-500 text-white",
+      "DOC": "bg-green-500 text-white",
+      "XLSX": "bg-indigo-500 text-white",
+      "XLS": "bg-indigo-500 text-white",
+      "JPG": "bg-red-500 text-white",
+      "JPEG": "bg-pink-500 text-white",
+    }), []);
+
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
       setDebouncedKeyword(keyword);
@@ -158,22 +171,28 @@ const ViewDocuments = () => {
       Cell: ({ row }) => (
         <a
           href={`./ticket/${row.original.object_id}`}
-          className="text-indigo-600 hover:underline"
+          className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400"
         >
           {row.original.object_name}
         </a>
       ),
     },
-    { Header: 'File Type', accessor: 'file_extention' },
+    { Header: 'File Type', accessor: 'file_extention',
+      Cell: ({ row }) => (
+        <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${fileExtn[row.original.file_extention] || "bg-gray-300"}`}>
+              {row.original.file_extention}
+        </span>
+      ),
+    },
     {
       Header: 'File Name',
       Cell: ({ row }) => (
         <a
-          href={`https://servicedeskapi.wello.solutions/api/DbFileView/View/${row.original.file_name.replace(
+          href={`https://V1servicedeskapi.wello.solutions/api/DbFileView/View/${row.original.file_name.replace(
             /[^a-zA-Z ]/g,
             ''
           )}?id=${row.original.id}&token=${authKey}`}
-          className="text-indigo-600 hover:underline"
+          className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400"
           target="_blank"
           rel="noreferrer"
         >
@@ -181,10 +200,10 @@ const ViewDocuments = () => {
         </a>
       ),
     },
-    { Header: 'Upload When', accessor: 'date_add', Cell: ({ value }) => new Date(value).toLocaleDateString() },
-  ], [authKey, selectedFiles]);
+    { Header: 'Upload When', accessor: 'date_add', Cell: ({ value }) => new Date(value).toLocaleString('nl-BE') },
+  ], [authKey, selectedFiles, fileExtn]);
 
-  const toggleFileSelection = (file) => {
+  const toggleFileSelection = (file) => { 
     setSelectedFiles((prev) =>
       prev.some((f) => f.id === file.id)
         ? prev.filter((f) => f.id !== file.id)
@@ -197,7 +216,7 @@ const ViewDocuments = () => {
   
     for (const file of contacts) {
       try {
-        const url = `https://servicedeskapi.wello.solutions/api/DbFileView/View/${file.file_name.replace(
+        const url = `https://V1servicedeskapi.wello.solutions/api/DbFileView/View/${file.file_name.replace(
           /[^a-zA-Z ]/g,
           ''
         )}?id=${file.id}&token=${authKey}`;

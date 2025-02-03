@@ -10,6 +10,23 @@ const ViewWorkOrderList = () => {
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState('open'); // State to track selected tab
 
+  const statusColors = useMemo(() => ({
+    "In Progress": "bg-yellow-500 text-white",
+    "Planned": "bg-blue-500 text-white",
+    "To be Planned": "bg-purple-500 text-white",
+    "In progress (W)": "bg-orange-500 text-white",
+    "Open": "bg-green-500 text-white",
+    "Ready for Review": "bg-indigo-500 text-white",
+    "Cancelled": "bg-red-500 text-white",
+    "Completed": "bg-pink-500 text-white",
+  }), []);
+
+  const jobType = useMemo(() => ({
+    "Repair": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+    "Maintenance": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    "Installation": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  }), []);
+
   useEffect(() => {
     const fetchWorkOrder = async () => {
       try {
@@ -27,20 +44,42 @@ const ViewWorkOrderList = () => {
 
   const columns = useMemo(
     () => [
-      { Header: 'Planned date', accessor: 'date_create', Cell: ({ value }) => new Date(value).toLocaleDateString() },
-      { Header: 'Status', accessor: 'job_status_name' },
-      { Header: 'Name', accessor: 'name', Cell: ({ value }) => value.substr(0, 50) },
-      { Header: 'Address', accessor: 'db_address_street' },
+      { Header: 'Planned date', accessor: 'date_create', 
+        Cell: ({ value }) => new Date(value).toLocaleDateString('nl-BE') 
+      },
+      { Header: 'Status', accessor: 'job_status_name', 
+        Cell: ({ row }) => (
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.job_status_name] || "bg-gray-300"}`}>
+                {row.original.job_status_name}
+          </span>
+        ),
+      },
+      { Header: 'Name', accessor: 'name', 
+        Cell: ({ value }) => value.substr(0, 50) 
+      },
+      { Header: 'Address', accessor: 'db_address_street', 
+        Cell: ({ row }) => (
+          <span>
+            {row.original.db_address_street} {row.original.db_address_city} {row.original.db_address_zip}
+          </span>
+        ),
+      },
       { Header: 'Reference',
         Cell: ({ row }) => (
-          <a href={`./workorder/${row.original.id}`} className="text-indigo-600 hover:underline">
+          <a href={`./workorder/${row.original.id}`} className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
             {row.original.id2}
           </a>
         ),
        },
-      { Header: 'Type', accessor: 'job_type_name' },
+      { Header: 'Type', accessor: 'job_type_name',
+        Cell: ({ row }) => (
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${jobType[row.original.job_type_name] || "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"}`}>
+                {row.original.job_type_name}
+          </span>
+        ),
+      },
     ],
-    []
+    [jobType, statusColors]
   );
 
   // Filter jobs based on selected tab
@@ -51,7 +90,8 @@ const ViewWorkOrderList = () => {
       } else {
         return job.job_status_name === 'Completed' || job.job_status_name === 'Completed 1' || job.job_status_name === 'Cancelled'; 
       }
-    });
+    })
+    .sort((a, b) => b.id2 - a.id2);
   }, [jobs, selectedTab]);
 
   // Create table instance with pagination
@@ -151,33 +191,35 @@ const ViewWorkOrderList = () => {
         </table>
       </div>
 
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between mt-4">
-        <span className="text-sm text-gray-700">
-          Page {pageIndex + 1} of {pageOptions.length}
-        </span>
-        <div>
-          <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className="py-2 px-4 mr-2 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
-            {'<<'}
-          </button>
-          <button onClick={() => previousPage()} disabled={!canPreviousPage} className="py-2 px-4 mr-2 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
-            {'<'}
-          </button>
-          <button onClick={() => nextPage()} disabled={!canNextPage} className="py-2 px-4 mr-2 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
-            {'>'}
-          </button>
-          <button onClick={() => gotoPage(pageOptions.length - 1)} disabled={!canNextPage} className="py-2 px-4 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
-            {'>>'}
-          </button>
+      {/* Pagination Controls - Only show if filteredWorkOrder exceed pageSize (10) */}
+      {filteredWorkOrder.length > 10 && (
+        <div className="flex items-center justify-between mt-4">
+          <span className="text-sm text-gray-700">
+            Page {pageIndex + 1} of {pageOptions.length}
+          </span>
+          <div>
+            <button onClick={() => gotoPage(0)} disabled={!canPreviousPage} className="py-2 px-4 mr-2 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
+              {'<<'}
+            </button>
+            <button onClick={() => previousPage()} disabled={!canPreviousPage} className="py-2 px-4 mr-2 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
+              {'<'}
+            </button>
+            <button onClick={() => nextPage()} disabled={!canNextPage} className="py-2 px-4 mr-2 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
+              {'>'}
+            </button>
+            <button onClick={() => gotoPage(pageOptions.length - 1)} disabled={!canNextPage} className="py-2 px-4 bg-indigo-600 text-white rounded-md disabled:bg-gray-300">
+              {'>>'}
+            </button>
+          </div>
+          <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} className="ml-2 p-2 border border-gray-300 rounded-md max-w-32">
+            {[10, 20, 30, 50].map(size => (
+              <option key={size} value={size}>
+                Show {size}
+              </option>
+            ))}
+          </select>
         </div>
-        <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} className="ml-2 p-2 border border-gray-300 rounded-md max-w-32">
-          {[10, 20, 30, 50].map(size => (
-            <option key={size} value={size}>
-              Show {size}
-            </option>
-          ))}
-        </select>
-      </div>
+      )}
     </div>
   );
 };

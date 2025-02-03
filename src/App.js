@@ -6,6 +6,7 @@ import ForgetPassword from './components/ForgetPassword';
 import ProtectedRoute from './ProtectedRoute';
 import Navigation from './components/Navigation';
 import ViewHome from './components/ViewHome';
+import About from './components/About';
 import CreateTicket from './components/CreateTicket';
 import ViewTicketList from './components/ViewTicketList';
 import ViewTicket from './components/ViewTicket';
@@ -41,6 +42,14 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <ViewHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/about"
+          element={
+            <ProtectedRoute>
+              <About />
             </ProtectedRoute>
           }
         />

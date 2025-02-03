@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { fetchData } from '../services/apiService';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const ForgotPassword = () => {
@@ -9,20 +9,31 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (window.welloServiceDesk && window.welloServiceDesk.domain) {
+        //console.log("Domain:", window.welloServiceDesk.domain);
+        setDomain(window.welloServiceDesk.domain);
+    }
+  }, []);
+
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-
+    
     try {
       // API request to send password reset email
-      await fetchData(
-        `https://v1servicedeskapi.wello.solutions/api/Contact/SendPasswordReminder?domain=${domain}&e_login=${email}`,
-        'POST',
-        {}
+      await axios.get(
+        `https://v1servicedeskapi.wello.solutions/api/Contact/SendPasswordReminder?domain=${domain}&e_login=${email}`
       );
       setMessage('A password reset link has been sent to your email.');
       setError('');
       setEmail(''); // Clear email after successful submission
-      setDomain(''); // Clear domain after successful submission
+      //setDomain(''); // Clear domain after successful submission
+
+      // Navigate to home page after 5 seconds
+      setTimeout(() => {
+        navigate('/');
+      }, 5000);
+
     } catch (err) {
       setError('Failed to send reset link. Please try again later.');
       setMessage('');
@@ -36,7 +47,7 @@ const ForgotPassword = () => {
         {message && <p className="text-green-600 mb-4">{message}</p>}
         {error && <p className="text-red-600 mb-4">{error}</p>}
         <form onSubmit={handleForgotPassword}>
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label htmlFor="domain" className="block text-sm font-medium text-gray-600">Domain</label>
             <input
               type="text"
@@ -46,7 +57,7 @@ const ForgotPassword = () => {
               className="mt-1 p-2 w-full border rounded-md shadow-sm"
               required
             />
-          </div>
+          </div> */}
           <div className="mb-6">
             <label htmlFor="email" className="block text-sm font-medium text-gray-600">Email</label>
             <input
@@ -63,7 +74,7 @@ const ForgotPassword = () => {
           </button>
           <button type="button"
             onClick={() => navigate(-1)} // Navigate back one step in history
-            className="w-full bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 mt-2"
+            className="w-full text-center bg-gray-500 text-white py-2 rounded-md hover:bg-gray-600 mt-2"
           >
             Back
           </button>

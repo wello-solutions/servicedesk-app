@@ -44,7 +44,7 @@ const Home = () => {
         <div className="grid md:grid-cols-4 gap-6">
           <div className="md:col-span-3 grid sm:grid-cols-2 gap-6">
             <Link to="/create" className="block">
-              <div className="bg-teal-800 text-white p-6 rounded-lg shadow hover:bg-teal-700 transition-colors">
+              <div className="bg-teal-800 text-white p-6 rounded-lg shadow hover:bg-teal-700 transition-colors relative">
                 <div className="flex items-center space-x-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -67,7 +67,7 @@ const Home = () => {
               </div>
             </Link>
             <Link to="/calendar" className="block">
-              <div className="bg-orange-600 text-white p-6 rounded-lg shadow hover:bg-orange-500 transition-colors">
+              <div className="bg-orange-600 text-white p-6 rounded-lg shadow hover:bg-orange-500 transition-colors relative">
                 <div className="flex items-center space-x-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -77,7 +77,7 @@ const Home = () => {
               </div>
             </Link>
             <Link to="/workorders" className="block">
-              <div className="bg-orange-500 text-white p-6 rounded-lg shadow hover:bg-orange-400 transition-colors">
+              <div className="bg-orange-500 text-white p-6 rounded-lg shadow hover:bg-orange-400 transition-colors relative">
                 <div className="flex items-center space-x-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -88,7 +88,7 @@ const Home = () => {
             </Link>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 relative bg-gray-100">
             <section>
               <h2 className="text-gray-600 mb-2 uppercase text-sm font-semibold">USERS</h2>
               <Link to="/users" className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900">
@@ -115,7 +115,7 @@ const Home = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                 </svg>
-                <span>ALL FILES RELATED TO YOU</span>
+                <span>All files related to you</span>
               </Link>
             </section>
 
@@ -128,10 +128,6 @@ const Home = () => {
                 <span>Support info</span>
               </Link>
             </section>
-
-            <button className="text-blue-600 hover:text-blue-800 text-sm">
-              Turn on translation mode
-            </button>
           </div>
         </div>
       </main>

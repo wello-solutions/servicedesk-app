@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { Link } from 'react-router-dom';
@@ -10,6 +10,15 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false)
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  useEffect(() => {
+    if (window.welloServiceDesk && window.welloServiceDesk.domain) {
+        //console.log("Domain:", window.welloServiceDesk.domain);
+        setDomain(window.welloServiceDesk.domain);
+    } else {
+      setDomain('testnative2');
+    }
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -29,7 +38,7 @@ const Login = () => {
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-8">Sign in to your account</h2>
             <form className="space-y-6" onSubmit={handleSubmit}>
-              <div>
+              {/* <div>
                 <label htmlFor="domain" className="block text-sm font-medium text-gray-700">
                   Domain
                 </label>
@@ -44,7 +53,7 @@ const Login = () => {
                     onChange={(e) => setDomain(e.target.value)}
                   />
                 </div>
-              </div> 
+              </div> */}
               
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">

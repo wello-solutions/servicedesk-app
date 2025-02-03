@@ -80,7 +80,7 @@ const SingleWordOrder = () => {
         const authKey = btoa(authString);
     
         const config = {
-          url: `https://servicedeskapi.wello.solutions/api/DbFileView/GetFileThumbnail/?id=${docId}&maxWidth=256&maxHeight=256`,
+          url: `https://V1servicedeskapi.wello.solutions/api/DbFileView/GetFileThumbnail/?id=${docId}&maxWidth=256&maxHeight=256`,
           method: 'GET',
           headers: {
             'Authorization': `Basic ${authKey}`,
@@ -150,37 +150,39 @@ const SingleWordOrder = () => {
       </div>
 
       {activeTab === 'details' ? (
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-              <h4 className="text-lg font-semibold">Equipment</h4>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div className='shadow-md rounded-lg p-4 '>
+              <h4 className="text-lg font-semibold pb-2">Equipment</h4>
               <ul className="list-none list-inside text-gray-700">
                 <li>{workOrder?.project_name}</li>
                 <li>{workOrder?.db_address_street}</li>
                 <li>{workOrder?.db_address_zip} {workOrder?.db_address_city}</li>
-                {workOrder?.contact_mobile && 
-                  <li>{workOrder?.contact_mobile}</li>}
+                {workOrder?.contact_mobile && (
+                  <li>📞 <a href={`tel:${workOrder.contact_mobile}`}>{workOrder.contact_mobile}</a></li>
+                )}
               </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-            <h4 className="text-lg font-semibold">Point of Contact</h4>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Point of Contact</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>{workOrder?.contact_fullname}</li>
-              {workOrder?.contact_phone &&
-                <li>{workOrder?.contact_phone}</li>}
+              {workOrder?.contact_phone && (
+                  <li>📞 <a href={`tel:${workOrder.contact_phone}`}>{workOrder.contact_phone}</a></li>
+              )}
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-            <h4 className="text-lg font-semibold">Type and Status</h4>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Type and Status</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>{workOrder?.job_type_name} - {workOrder?.job_priority_name}</li>
               <li>{workOrder?.job_status_name}</li>
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-            <h4 className="text-lg font-semibold">SLA information</h4>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">SLA information</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>Resolution Time {new Date(workOrder?.dateutc_max_sla_resolution).getFullYear() !== 1980 ?? new Date(workOrder?.dateutc_max_sla_resolution).toLocaleString()}</li>
               <li>Arrival Time {new Date(workOrder?.dateutc_max_sla_hands_on_machine).getFullYear() !== 1980 ?? new Date(workOrder?.dateutc_max_sla_hands_on_machine).toLocaleString()}</li>
@@ -188,22 +190,22 @@ const SingleWordOrder = () => {
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-            <h4 className="text-lg font-semibold">Description</h4>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Description</h4>
             <p className="mb-4">{workOrder?.remark}</p>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-            <h4 className="text-lg font-semibold">Planned date</h4>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Planned date</h4>
             <ul className="list-none list-inside text-gray-700">
-              <li>{new Date(workOrder?.date_update).toLocaleString()}</li>
+              <li>{new Date(workOrder?.first_planning_date).toLocaleDateString('nl-BE')} {new Date(workOrder?.first_planning_date).getHours('nl-BE')}:{new Date(workOrder?.first_planning_date).getMinutes('nl-BE')}</li>
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-            <h4 className="text-lg font-semibold">Total planned time</h4>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Total planned time</h4>
             <ul className="list-none list-inside text-gray-700">
-              <li>{Math.floor(workOrder?.total_time_planned / 60).toString().padStart(2, '0')}:{(workOrder?.total_time_planned % 60).toString().padStart(2, '0')}</li>
+              <li>{Math.floor(workOrder?.total_time_planned / 60).toString().padStart(2, '0')}h{(workOrder?.total_time_planned % 60).toString().padStart(2, '0')}</li>
             </ul>
           </div>
         </div> 

@@ -33,7 +33,7 @@ const ViewCalendars = () => {
         const restype = await fetchData('https://v1servicedeskapi.wello.solutions/api/EquipmentFamily', 'GET');
         setEquipmentTypes(restype.value);
 
-        const resname = await fetchData('https://v1servicedeskapi.wello.solutions/api/ProjectView', 'GET');
+        const resname = await fetchData('https://v1servicedeskapi.wello.solutions/api/ProjectView?$filter=root_parent_id+ne+00000000-0000-0000-0000-000000000000', 'GET');
         setEquipmentNames(resname.value);
 
         setLoading(false);
@@ -57,7 +57,7 @@ const ViewCalendars = () => {
         Header: 'Ref',
         accessor: 'jobs_id2',
         Cell: ({ row }) => (
-          <a href={`./workorder/${row.original.jobs_id}`} className="text-indigo-600 hover:underline" >
+          <a href={`./workorder/${row.original.jobs_id}`} className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400" >
             {row.original.jobs_id2}
           </a>
         )
@@ -66,13 +66,18 @@ const ViewCalendars = () => {
         Header: 'Name',
         accessor: 'jobs_name',
         Cell: ({ row }) => (
-          <a href={`./workorder/${row.original.jobs_id}`} className="text-indigo-600 hover:underline" >
+          <a href={`./workorder/${row.original.jobs_id}`} className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400" >
             {row.original.jobs_name}
           </a>
         )
       },
-      { Header: 'Address', accessor: 'db_address_street' },
-      { Header: 'Technician', accessor: 'user_firstname' },
+      { Header: 'Address', 
+        accessor: ({ db_address_street, db_address_city, db_address_zip }) => `${db_address_street} ${db_address_city} ${db_address_zip}`
+      },
+      {
+        Header: 'Technician',
+        accessor: ({ user_firstname, user_lastname }) => `${user_firstname} ${user_lastname}`
+      }
     ],
     []
   );
@@ -169,8 +174,10 @@ const ViewCalendars = () => {
               onChange={(e) => setSelectedEquipmentType(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500"
             >
-              <option value="All">All equipment type</option>
-              {Array.isArray(equipmentTypes) && equipmentTypes.map((type) => (
+              <option value="All">All equipment types</option>
+              {Array.isArray(equipmentTypes) && equipmentTypes
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((type) => (
                 <option key={type.id} value={type.id}>{type.name}</option>
               ))}
             </select>
@@ -183,8 +190,10 @@ const ViewCalendars = () => {
               onChange={(e) => setSelectedEquipmentName(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500"
             >
-              <option value="All">All equipment</option>
-              {Array.isArray(equipmentNames) && equipmentNames.map((type) => (
+              <option value="All">All equipments</option>
+              {Array.isArray(equipmentNames) && equipmentNames
+              .sort((a, b) => a.name.localeCompare(b.name))
+              .map((type) => (
                 <option key={type.equipment_family_id} value={type.equipment_family_id}>{type.equipment_family_name} - {type.name} - {type.db_address_street}</option>
               ))}
             </select>
