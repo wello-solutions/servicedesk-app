@@ -38,23 +38,6 @@ const Login = () => {
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-8">Sign in to your account</h2>
             <form className="space-y-6" onSubmit={handleSubmit}>
-              {/* <div>
-                <label htmlFor="domain" className="block text-sm font-medium text-gray-700">
-                  Domain
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="domain"
-                    name="domain"
-                    type="text"
-                    required
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    value={domain}
-                    onChange={(e) => setDomain(e.target.value)}
-                  />
-                </div>
-              </div> */}
-              
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Email address
@@ -121,11 +104,6 @@ const Login = () => {
                   Sign in
                 </button>
               </div>
-              { /*<div className='text-center'>
-                <Link to="/create-user" className="font-medium text-indigo-600 hover:text-indigo-500">
-                    Don't have an account?
-                </Link>
-              </div> */ }
             </form>
           </div>
         </div>
