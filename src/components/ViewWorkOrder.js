@@ -54,7 +54,7 @@ const SingleWordOrder = () => {
 
     const getworkOrderDoc = async () => {
       try {
-        const endpoint_1 = `https://servicedeskapi.wello.solutions/api/DbFileView?$filter=db_table_name+eq+%27task%27+and+id_in_table+eq+${workOrderId}`;
+        const endpoint_1 = `https://v1servicedeskapi.wello.solutions/api/DbFileView?$filter=db_table_name+eq+%27task%27+and+id_in_table+eq+${workOrderId}`;
         const data_1 = await fetchData(endpoint_1, 'GET');
         setDoc(data_1.value);
       } catch (err) {
@@ -65,7 +65,7 @@ const SingleWordOrder = () => {
 
     const getworkOrderSub = async () => {
       try {
-        const endpoint_2 = `https://servicedeskapi.wello.solutions/api/JobsView?$filter=root_parent_id+eq+${workOrderId}+and+has_child+eq+false&$orderby=id2%20desc`;
+        const endpoint_2 = `https://v1servicedeskapi.wello.solutions/api/JobsView?$filter=root_parent_id+eq+${workOrderId}+and+has_child+eq+false&$orderby=id2%20desc`;
         const data_2 = await fetchData(endpoint_2, 'GET');
         setSub(data_2.value);
       } catch (err) {

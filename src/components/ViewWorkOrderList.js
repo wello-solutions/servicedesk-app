@@ -30,8 +30,24 @@ const ViewWorkOrderList = () => {
   useEffect(() => {
     const fetchWorkOrder = async () => {
       try {
-        const response = await fetchData('https://v1servicedeskapi.wello.solutions/api/JobsView/', 'GET');
-        setJobs(response.value); // Adjusted for your API's response structure
+        //const response = await fetchData('https://v1servicedeskapi.wello.solutions/api/JobsView/', 'GET');
+        const endpoint = `https://v1servicedeskapi.wello.solutions/api/JobsView/Search`;
+        const payload = {
+          "is_get_completed": false,
+          "query_object": {
+              "startRow": 0,
+              "endRow": 500,
+              "rowGroupCols": [],
+              "valueCols": [],
+              "pivotCols": [],
+              "pivotMode": false,
+              "groupKeys": [],
+              "filterModel": {},
+              "sortModel": []
+          }
+      };
+        const response = await fetchData(endpoint, 'POST', payload);
+        setJobs(response); // Adjusted for your API's response structure
         setLoading(false);
       } catch (err) {
         setError(err);
@@ -69,7 +85,7 @@ const ViewWorkOrderList = () => {
           <button 
           onClick={() =>  navigate(`/workorder/${row.original.id}`)}
           className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
-            {row.original.id2}
+            {row.original.id2}        
           </button>
         ),
        },

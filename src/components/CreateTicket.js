@@ -792,7 +792,7 @@ const CreateTicket = () => {
 
               {/* File Thumbnails Grid */}
                 <div className="mt-2 grid grid-cols-6 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                  {ticketDetails?.file.map((file, index) => {
+                  {ticketDetails?.file && ticketDetails.file.map((file, index) => {
                     const fileURL = URL.createObjectURL(file);
                     const isImage = file.type.startsWith("image/");
                     const isPDF = file.type === "application/pdf";

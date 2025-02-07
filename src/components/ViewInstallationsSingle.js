@@ -64,10 +64,10 @@ const SingleInstallation = () => {
     const getInstallationSub = async () => {
       try {
         const endpoint_2 = `https://v1servicedeskapi.wello.solutions/api/JobsView/SearchAllJobsLinkToProject`;
-        const payload = { "project_id": "72c67d1d-4b0f-4f21-84a0-d6f50e1eb7f0", "year": null, "query_object": { "startRow": 0, "endRow": 500, "rowGroupCols": [], "valueCols": [], "pivotCols": [], "pivotMode": false, "groupKeys": [], "filterModel": {}, "sortModel": [] } }
+        const payload = { "project_id": `${InstallationId}`, "year": null, "query_object": { "startRow": 0, "endRow": 500, "rowGroupCols": [], "valueCols": [], "pivotCols": [], "pivotMode": false, "groupKeys": [], "filterModel": {}, "sortModel": [] } }
         const data_2 = await fetchData(endpoint_2, 'POST', payload);
         setWordOrder(data_2);
-        console.log(data_2);
+        //console.log(data_2);
       } catch (err) {
         console.error("Error fetching documents:", err);
         setError('Failed to fetch documents.');
@@ -109,7 +109,7 @@ const SingleInstallation = () => {
         const response = await axios(config);
         const imageObjectURL = URL.createObjectURL(response.data);
         setFile(imageObjectURL);
-        console.log(imageObjectURL);
+        //console.log(imageObjectURL);
       } catch (err) {
         console.error("Error fetching thumbnail:", err);
         setError('Failed to fetch thumbnail.');
@@ -442,7 +442,7 @@ const SingleInstallation = () => {
                       </td>
                       <td className="px-4 py-2 text-sm text-gray-800">
                         <button
-                          onClick={() => navigate(`/word-order/${item.id}}`)}
+                          onClick={() => navigate(`/workorder/${item.id}`)}
                           className="text-blue-800 font-medium me-2 text-left">
                           {item.id2}
                         </button>
