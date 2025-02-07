@@ -57,18 +57,22 @@ const ViewCalendars = () => {
         Header: 'Ref',
         accessor: 'jobs_id2',
         Cell: ({ row }) => (
-          <a href={`./workorder/${row.original.jobs_id}`} className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400" >
+          <button
+          onClick={() =>  navigate(`/workorder/${row.original.jobs_id}`)} 
+          className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400" >
             {row.original.jobs_id2}
-          </a>
+          </button>
         )
       },
       {
         Header: 'Name',
         accessor: 'jobs_name',
         Cell: ({ row }) => (
-          <a href={`./workorder/${row.original.jobs_id}`} className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400" >
+          <button
+          onClick={() =>  navigate(`/workorder/${row.original.jobs_id}`)} 
+          className="text-blue-800 font-medium me-2 text-left" >
             {row.original.jobs_name}
-          </a>
+          </button>
         )
       },
       { Header: 'Address', 
@@ -79,7 +83,7 @@ const ViewCalendars = () => {
         accessor: ({ user_firstname, user_lastname }) => `${user_firstname} ${user_lastname}`
       }
     ],
-    []
+    [navigate]
   );
 
   const { filteredContents, datesWithData } = useMemo(() => {

@@ -37,10 +37,10 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <div className="relative h-48 md:h-64 w-full">
+      <div className="relative w-full">
         <img src="https://servicedesk.wello.solutions/images/sd_default_banner.png" alt="Banner" className="w-full" /> 
       </div>
-      <main className="container mx-auto px-8 py-8">
+      <main className="container relative mx-auto px-8 py-8 bg-gray-100">
         <div className="grid md:grid-cols-4 gap-6">
           <div className="md:col-span-3 grid sm:grid-cols-2 gap-6">
             <Link to="/create" className="block">
@@ -88,7 +88,7 @@ const Home = () => {
             </Link>
           </div>
 
-          <div className="space-y-6 relative bg-gray-100">
+          <div className="space-y-6">
             <section>
               <h2 className="text-gray-600 mb-2 uppercase text-sm font-semibold">USERS</h2>
               <Link to="/users" className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900">

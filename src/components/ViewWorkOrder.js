@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchData } from '../services/apiService';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const SingleWordOrder = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const { workOrderId } = useParams();
   const [workOrder, setWorkOrder] = useState(null);
   const [doc, setDoc] = useState([]);
@@ -14,6 +14,23 @@ const SingleWordOrder = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('details'); // State to manage active tab
+
+  const statusColors = useMemo(() => ({
+    "In Progress": "bg-yellow-500 text-white",
+    "Planned": "bg-blue-500 text-white",
+    "To be Planned": "bg-purple-500 text-white",
+    "In progress (W)": "bg-orange-500 text-white",
+    "Open": "bg-green-500 text-white",
+    "Ready for Review": "bg-indigo-500 text-white",
+    "Cancelled": "bg-red-500 text-white",
+    "Completed": "bg-pink-500 text-white",
+  }), []);
+
+  const jobType = useMemo(() => ({
+    "Repair": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+    "Maintenance": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    "Installation": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  }), []);
 
   useEffect(() => {
     const getworkOrderDetails = async () => {
@@ -71,14 +88,14 @@ const SingleWordOrder = () => {
         if (!docId) return;
 
         const auth = JSON.parse(sessionStorage.getItem('auth'));
-    
+
         if (!auth || !auth.email || !auth.password || !auth.domain) {
           throw new Error('Invalid or missing authentication data');
         }
-    
+
         const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
         const authKey = btoa(authString);
-    
+
         const config = {
           url: `https://V1servicedeskapi.wello.solutions/api/DbFileView/GetFileThumbnail/?id=${docId}&maxWidth=256&maxHeight=256`,
           method: 'GET',
@@ -88,9 +105,9 @@ const SingleWordOrder = () => {
           },
           responseType: 'blob',
         };
-    
+
         const response = await axios(config);
-        const imageObjectURL = URL.createObjectURL(response.data); 
+        const imageObjectURL = URL.createObjectURL(response.data);
         setFile(imageObjectURL);
         console.log(imageObjectURL);
       } catch (err) {
@@ -106,11 +123,11 @@ const SingleWordOrder = () => {
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100">
-    <div className="relative">
-      <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
-      <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
-    </div>
-  </div>;
+      <div className="relative">
+        <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
+        <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
+      </div>
+    </div>;
   }
   if (error) return <div className="text-center text-red-600">{error}</div>;
 
@@ -126,7 +143,7 @@ const SingleWordOrder = () => {
         </button>
         <h2 className="capitalize text-xl font-bold mb-2 ml-4">{workOrder?.name} | Reference: {workOrder?.id2}</h2>
       </div>
-      
+
       {/* Tab Navigation */}
       <div className="flex space-x-4 border-b border-gray-300 mb-4">
         <button
@@ -135,32 +152,34 @@ const SingleWordOrder = () => {
         >
           Overview
         </button>
+        
         <button
           className={`py-2 px-4 font-semibold ${activeTab === 'documents' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
           onClick={() => setActiveTab('documents')}
         >
           Documents
         </button>
+        {sub.length > 0 && (
         <button
           className={`py-2 px-4 font-semibold ${activeTab === 'sub' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
           onClick={() => setActiveTab('sub')}
         >
           Sub-WO's
-        </button>
+        </button> )}
       </div>
 
       {activeTab === 'details' ? (
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='shadow-md rounded-lg p-4 '>
-              <h4 className="text-lg font-semibold pb-2">Equipment</h4>
-              <ul className="list-none list-inside text-gray-700">
-                <li>{workOrder?.project_name}</li>
-                <li>{workOrder?.db_address_street}</li>
-                <li>{workOrder?.db_address_zip} {workOrder?.db_address_city}</li>
-                {workOrder?.contact_mobile && (
-                  <li>📞 <a href={`tel:${workOrder.contact_mobile}`}>{workOrder.contact_mobile}</a></li>
-                )}
-              </ul>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Equipment</h4>
+            <ul className="list-none list-inside text-gray-700">
+              <li>{workOrder?.project_name}</li>
+              <li>{workOrder?.db_address_street}</li>
+              <li>{workOrder?.db_address_zip} {workOrder?.db_address_city}</li>
+              {workOrder?.contact_mobile && (
+                <li>📞 <a href={`tel:${workOrder.contact_mobile}`}>{workOrder.contact_mobile}</a></li>
+              )}
+            </ul>
           </div>
 
           <div className='shadow-md rounded-lg p-4 '>
@@ -168,7 +187,7 @@ const SingleWordOrder = () => {
             <ul className="list-none list-inside text-gray-700">
               <li>{workOrder?.contact_fullname}</li>
               {workOrder?.contact_phone && (
-                  <li>📞 <a href={`tel:${workOrder.contact_phone}`}>{workOrder.contact_phone}</a></li>
+                <li>📞 <a href={`tel:${workOrder.contact_phone}`}>{workOrder.contact_phone}</a></li>
               )}
             </ul>
           </div>
@@ -176,8 +195,17 @@ const SingleWordOrder = () => {
           <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold pb-2">Type and Status</h4>
             <ul className="list-none list-inside text-gray-700">
-              <li>{workOrder?.job_type_name} - {workOrder?.job_priority_name}</li>
-              <li>{workOrder?.job_status_name}</li>
+              <li>
+                <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${jobType[workOrder?.job_type_name] || "bg-gray-300"}`}>
+                  {workOrder?.job_type_name}
+                </span> 
+                  - {workOrder?.job_priority_name}
+              </li>
+              <li>
+                <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[workOrder?.job_status_name] || "bg-gray-300"}`}>
+                  {workOrder?.job_status_name}
+                </span>
+              </li>
             </ul>
           </div>
 
@@ -208,73 +236,73 @@ const SingleWordOrder = () => {
               <li>{Math.floor(workOrder?.total_time_planned / 60).toString().padStart(2, '0')}h{(workOrder?.total_time_planned % 60).toString().padStart(2, '0')}</li>
             </ul>
           </div>
-        </div> 
+        </div>
       ) : activeTab === 'documents' ? (
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
           <div className="border border-gray-300 rounded-md bg-gray-50">
             {file ? (
               <img src={file} alt="Thumbnail" className="w-full h-auto" />
             ) : (
-              <p className="text-gray-600 p-4">No document preview available or image could not be loaded.</p>
+              <p className="text-gray-600 p-4">No document available.</p>
             )}
             {doc.length > 0 && (
               doc.map(item => (
                 <div key={item.id} className="p-4">
                   <h3 className="font-bold">{item.name}</h3>
                   <p className="text-gray-500">{new Date(item.date_add).toLocaleString()}</p>
-                  <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'> 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
-                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z"/>
-                    <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
-                  </svg> View Document
+                  <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
+                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z" />
+                      <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+                    </svg> View Document
                   </a>
                 </div>
               ))
             )}
-            </div>
+          </div>
         </div>
       ) : (
         <div className=''>
           <div className=''>
             {sub.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
-                <thead className="bg-gray-100">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
+                  <thead className="bg-gray-100">
                     <tr>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Status
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Name
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Reference
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          type
-                        </th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                        Status
+                      </th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                        Name
+                      </th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                        Reference
+                      </th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                        type
+                      </th>
                     </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                 {sub.map(item => (
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {sub.map(item => (
                       <tr className="hover:bg-gray-50">
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {item.job_status_name}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {item.name}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {item.id2}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {item.job_type_name}
-                          </td>
+                        <td className="px-4 py-2 text-sm text-gray-800">
+                          {item.job_status_name}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-800">
+                          {item.name}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-800">
+                          {item.id2}
+                        </td>
+                        <td className="px-4 py-2 text-sm text-gray-800">
+                          {item.job_type_name}
+                        </td>
                       </tr>
-                 ))}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p className="text-gray-600">No record available.</p>
             )}

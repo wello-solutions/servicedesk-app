@@ -8,7 +8,6 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const dropdownRef = useRef(null); // ref to handle outside click
 
   useEffect(() => {
@@ -23,7 +22,6 @@ const Navigation = () => {
           firstname: 'Guest',
           lastname: 'User'
         })
-        setError(err);
         setLoading(false);
       }
     };
@@ -45,10 +43,6 @@ const Navigation = () => {
 
   if (loading) {
     return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error fetching contact count: {error.message}</div>;
   }
 
   return (

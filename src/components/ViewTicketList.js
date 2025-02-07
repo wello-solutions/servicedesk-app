@@ -48,12 +48,16 @@ const ViewTicketList = () => {
         Header: 'Reference',
         accessor: 'id2',
         Cell: ({ row }) => (
-          <a href={`./ticket/${row.original.id}`} className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
+          <button 
+          onClick={() =>  navigate(`/ticket/${row.original.id}`)} 
+          className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
             {row.original.id2}
-          </a>
+          </button>
         ),
       },
-      { Header: 'Created on', accessor: 'date_create', Cell: ({ value }) => new Date(value).toLocaleDateString('nl-BE') },
+      { Header: 'Created on', accessor: 'date_create', 
+        Cell: ({ value }) => new Date(value).toLocaleDateString('nl-BE') 
+      },
       { Header: 'Status', accessor: 'task_status_name', 
         Cell: ({ row }) => (
           <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.task_status_name] || "bg-gray-300"}`}>
@@ -61,7 +65,11 @@ const ViewTicketList = () => {
           </span>
         ),
       },
-      { Header: 'Assigned to', accessor: 'assigned_to_user_fullname' },
+      { Header: 'Assigned to', accessor: 'assigned_to_user_fullname',
+        Cell: ({ row }) => (
+          row.original.assigned_to_user_fullname?.trim() ? row.original.assigned_to_user_fullname : 'Not Assigned'
+        ),
+      },
       { Header: 'Name', accessor: 'subject' },
       { Header: 'Type', accessor: 'task_type_name',
         Cell: ({ row }) => (
@@ -71,7 +79,7 @@ const ViewTicketList = () => {
         ),
       },
     ],
-    [taskType, statusColors]
+    [taskType, statusColors, navigate]
   );
 
   const filteredTickets = useMemo(() => {

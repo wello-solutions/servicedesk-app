@@ -18,15 +18,15 @@ const ViewInstallations = () => {
   const [includeArchived, setIncludeArchived] = useState(false);
 
   const statusColors = useMemo(() => ({
-        "In Progress": "bg-yellow-500 text-white",
-        "Planned": "bg-blue-500 text-white",
-        "To be Planned": "bg-purple-500 text-white",
-        "Out of production": "bg-orange-500 text-white",
-        "Active": "bg-green-500 text-white",
-        "Ready for Review": "bg-indigo-500 text-white",
-        "Proactive": "bg-red-500 text-white",
-        "Completed": "bg-pink-500 text-white",
-      }), []);
+    "In Progress": "bg-yellow-500 text-white",
+    "Planned": "bg-blue-500 text-white",
+    "To be Planned": "bg-purple-500 text-white",
+    "Out of production": "bg-orange-500 text-white",
+    "Active": "bg-green-500 text-white",
+    "Ready for Review": "bg-indigo-500 text-white",
+    "Proactive": "bg-red-500 text-white",
+    "Completed": "bg-pink-500 text-white",
+  }), []);
 
   useEffect(() => {
     const fetchInstallations = async () => {
@@ -45,13 +45,16 @@ const ViewInstallations = () => {
 
   const columns = useMemo(
     () => [
-      { Header: 'Name', 
+      {
+        Header: 'Name',
         Cell: ({ row }) => (
-          <a href={`./installation/${row.original.id}`} className="text-indigo-600 hover:underline">
+          <button
+            onClick={() => navigate(`/installation/${row.original.id}`)}
+            className="text-blue-800 font-medium me-2 text-left">
             {row.original.name}
-          </a>
+          </button>
         )
-       },
+      },
       { Header: 'Address', accessor: 'db_address_street' },
       { Header: 'Type', accessor: 'equipment_family_name' },
       { Header: 'Customer Reference', accessor: 'customer_reference' },
@@ -59,15 +62,16 @@ const ViewInstallations = () => {
       { Header: 'Model', accessor: 'equipment_model_name' },
       { Header: 'Serial Number', accessor: 'serial_number' },
       { Header: 'Barcode', accessor: 'barcode' },
-      { Header: 'Status', accessor: 'project_status_name', 
+      {
+        Header: 'Status', accessor: 'project_status_name',
         Cell: ({ row }) => (
           <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.project_status_name] || "bg-gray-300"}`}>
-                {row.original.project_status_name}
+            {row.original.project_status_name}
           </span>
         ),
       },
     ],
-    [statusColors]
+    [statusColors, navigate]
   );
 
   // Filtered data based on search criteria
@@ -78,7 +82,7 @@ const ViewInstallations = () => {
       const matchesBrand = brand !== 'All' ? contact.equipment_brand_name === brand : true;
       const matchesModel = model !== 'All' ? contact.equipment_model_name === model : true;
       const matchesStatus = status !== 'All' ? contact.project_status_name === status : true;
-      const matchesArchived = includeArchived ? true : contact.project_status_name !== 'Archived';
+      const matchesArchived = includeArchived ? true : contact.project_status_is_closed !== true;
 
       return matchesLocation && matchesKeyword && matchesBrand && matchesModel && matchesStatus && matchesArchived;
     });
@@ -110,11 +114,11 @@ const ViewInstallations = () => {
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100">
-    <div className="relative">
-      <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
-      <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
-    </div>
-  </div>;
+      <div className="relative">
+        <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
+        <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
+      </div>
+    </div>;
   }
 
   if (error) {
@@ -151,21 +155,21 @@ const ViewInstallations = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div>
           <label className="block mb-1">Location <small>(Enter three letters to initiate search)</small></label>
-          <input 
-            type="text" 
-            value={location} 
-            onChange={(e) => setLocation(e.target.value)} 
-            placeholder="Enter location" 
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Enter location"
             className="border border-gray-300 rounded-md p-2 w-full"
           />
         </div>
         <div>
           <label className="block mb-1">Keyword</label>
-          <input 
-            type="text" 
-            value={keyword} 
-            onChange={(e) => setKeyword(e.target.value)} 
-            placeholder="Type a text" 
+          <input
+            type="text"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="Type a text"
             className="border border-gray-300 rounded-md p-2 w-full"
           />
         </div>
@@ -202,10 +206,10 @@ const ViewInstallations = () => {
       </div>
 
       <div className="flex items-center mb-4">
-        <input 
-          type="checkbox" 
-          checked={includeArchived} 
-          onChange={() => setIncludeArchived(!includeArchived)} 
+        <input
+          type="checkbox"
+          checked={includeArchived}
+          onChange={() => setIncludeArchived(!includeArchived)}
           className="mr-2"
         />
         <label className="text-sm">Don't see your equipment? Check to include archived equipment in your search.</label>
@@ -231,7 +235,7 @@ const ViewInstallations = () => {
               return (
                 <tr {...row.getRowProps()} className="hover:bg-gray-50">
                   {row.cells.map(cell => (
-                    <td {...cell.getCellProps()} className="px-4 py-2 text-sm text-gray-800">
+                    <td {...cell.getCellProps()} className="px-2 py-2 text-sm text-gray-800">
                       {cell.render('Cell')}
                     </td>
                   ))}
@@ -261,11 +265,11 @@ const ViewInstallations = () => {
             {'>>'}
           </button>
         </div>
-        <select 
-          value={pageSize} 
+        <select
+          value={pageSize}
           onChange={e => {
             setPageSize(Number(e.target.value));
-          }} 
+          }}
           className="border border-gray-300 rounded-md p-2 max-w-32"
         >
           {[10, 20, 30, 50].map(pageSizeOption => (

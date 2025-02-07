@@ -1,9 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useTable, usePagination } from 'react-table';
 import { fetchData } from '../services/apiService.js';
 import Calendar from 'react-calendar'
 import 'react-calendar/dist/Calendar.css'
 import { useNavigate } from 'react-router-dom';
+import { XCircle, File, FileText } from "lucide-react";
 
 const CreateTicket = () => {
   const navigate = useNavigate();
@@ -18,10 +19,9 @@ const CreateTicket = () => {
     problemDescription: '',
     file: null
   });
-  const isImageFile = ticketDetails?.file?.type?.startsWith("image/");
 
-  const [ticketTypes, setTicketTypes] = useState([]); 
-  const [severities, setSeverities] = useState([]); 
+  const [ticketTypes, setTicketTypes] = useState([]);
+  const [severities, setSeverities] = useState([]);
 
   const [location, setLocation] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -34,16 +34,20 @@ const CreateTicket = () => {
 
   const [userID, setUserID] = useState();
 
+  const [files, setFiles] = useState([]);
+  const fileInputRef = useRef(null);
+  const maxFileSize = 5 * 1024 * 1024;
+
   // Missing state variables
   const [date, setDate] = React.useState(new Date())
   const [hours, setHours] = React.useState(0)
   const [minutes, setMinutes] = React.useState(0)
   const [prefersDate, setPrefersDate] = useState(false); // Toggle for showing the date picker
 
-  useEffect(() => { 
-    const currentDate = new Date(); 
-    setHours(currentDate.getHours()); 
-    setMinutes(currentDate.getMinutes()); 
+  useEffect(() => {
+    const currentDate = new Date();
+    setHours(currentDate.getHours());
+    //setMinutes(currentDate.getMinutes());
   }, []);
 
   const incrementHours = () => setHours(h => h === 23 ? 0 : h + 1)
@@ -62,6 +66,57 @@ const CreateTicket = () => {
     { id: 4, label: "Review & Submit" },
   ];
 
+  const statusColors = useMemo(() => ({
+    "In Progress": "bg-yellow-500 text-white",
+    "Planned": "bg-blue-500 text-white",
+    "To be Planned": "bg-purple-500 text-white",
+    "Out of production": "bg-red-500 text-white",
+    "Active": "bg-green-500 text-white",
+    "Ready for Review": "bg-indigo-500 text-white",
+    "Proactive": "bg-orange-500 text-white",
+    "Completed": "bg-pink-500 text-white",
+  }), []);
+
+  const ticketType = useMemo(() => ({
+    "Repair request": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+    "Maintenance": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    "Installation": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  }), []);
+
+  const severityType = useMemo(() => ({
+    "Not critical": "text-blue-800 ",
+    "Medium high": "text-orange-800 ",
+    "Critical": "text-red-800 ",
+    "Low": "text-green-800 ",
+  }), []);
+
+  const handleFileChange = (event) => {
+    const newFiles = Array.from(event.target.files);
+
+    const validFiles = newFiles.filter((file) => {
+      if (file.size > maxFileSize) {
+        alert(`${file.name} is larger than 5MB and will not be added.`);
+        return false;
+      }
+      return true;
+    });
+
+    setFiles((prevFiles) => [...prevFiles, ...validFiles]); // Append only valid files
+
+    setTicketDetails((prevDetails) => ({
+      ...prevDetails,
+      file: prevDetails.file ? [...prevDetails.file, ...validFiles] : validFiles, // Store files in ticketDetails
+    }));
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeFile = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
+
   useEffect(() => {
     const fetchInstallations = async () => {
       try {
@@ -78,7 +133,7 @@ const CreateTicket = () => {
 
   const taskType = async () => {
     try {
-      const data = await fetchData('https://servicedeskapi.wello.solutions/api/TaskType?$orderby=is_default,sequence', 'GET');
+      const data = await fetchData('https://V1servicedeskapi.wello.solutions/api/TaskType?$orderby=is_default,sequence', 'GET');
       setTicketTypes(data.value);
     } catch (err) {
       setError(err);
@@ -94,18 +149,18 @@ const CreateTicket = () => {
     }
   }
 
- 
-    const fetchUserID = async () => {
-      try {
-        const auth = JSON.parse(sessionStorage.getItem('auth'));
-        const responseUser = await fetchData(`https://V1servicedeskapi.wello.solutions/api/Contact?$filter=e_login+eq+'${encodeURIComponent(auth.email)}'`, 'GET');
-        setUserID(responseUser.value[0]);
-      } catch (err) {
-        setError(err);
-      }
+
+  const fetchUserID = async () => {
+    try {
+      const auth = JSON.parse(sessionStorage.getItem('auth'));
+      const responseUser = await fetchData(`https://V1servicedeskapi.wello.solutions/api/Contact?$filter=e_login+eq+'${encodeURIComponent(auth.email)}'`, 'GET');
+      setUserID(responseUser.value[0]);
+    } catch (err) {
+      setError(err);
     }
-    
-  
+  }
+
+
 
   // Set the first ticketType when ticketTypes array changes
   useEffect(() => {
@@ -157,9 +212,16 @@ const CreateTicket = () => {
       { Header: 'Model', accessor: 'equipment_model_name' },
       { Header: 'Serial Number', accessor: 'serial_number' },
       { Header: 'Barcode', accessor: 'barcode' },
-      { Header: 'Status', accessor: 'project_status_name' },
+      {
+        Header: 'Status', accessor: 'project_status_name',
+        Cell: ({ row }) => (
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.project_status_name] || "bg-gray-300"}`}>
+            {row.original.project_status_name}
+          </span>
+        ),
+      },
     ],
-    []
+    [statusColors]
   );
 
   const filteredContacts = useMemo(() => {
@@ -169,7 +231,7 @@ const CreateTicket = () => {
       const matchesBrand = brand !== 'All' ? contact.equipment_brand_name === brand : true;
       const matchesModel = model !== 'All' ? contact.equipment_model_name === model : true;
       const matchesStatus = status !== 'All' ? contact.project_status_name === status : true;
-      const matchesArchived = includeArchived ? true : contact.project_status_name !== 'Archived';
+      const matchesArchived = includeArchived ? true : contact.project_status_is_closed !== true;
 
       return matchesLocation && matchesKeyword && matchesBrand && matchesModel && matchesStatus && matchesArchived;
     });
@@ -225,43 +287,41 @@ const CreateTicket = () => {
     setStep(2);
   };
 
-
-
-
   const handleSubmitTicket = async () => {
     const selectedTaskType = ticketTypes.find(type => type.name === ticketDetails.ticketType); // Assuming you're choosing from a list
     const selectedSeverity = severities.find(severity => severity.name === ticketDetails.severity); // Assuming you're choosing from a list
-  
+
     const payloadData = {
-      "contact_id": userID.id, 
-      "company_id": selectedRow.company_id, 
+      "contact_id": userID.id,
+      "company_id": selectedRow.company_id,
       "db_address_id": selectedRow.db_address_id,
       "to_db_table_id": "78154eca-ded3-490f-a47d-543e38c0e63d",
-      "to_id_in_table": selectedRow.id, 
-      "task_type_id": selectedTaskType.id, 
-      "task_priority_id": selectedSeverity.id, 
-      "subject": ticketName, 
-      "remark": ticketDetails.problemDescription, 
-      "date_suggested_by_company": `${date.toDateString()} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`, 
-      "date_closed": "1980-01-01", 
-      "date_update": "1980-01-01", 
+      "to_id_in_table": selectedRow.id,
+      "task_type_id": selectedTaskType.id,
+      "task_priority_id": selectedSeverity.id,
+      "subject": ticketName,
+      "remark": ticketDetails.problemDescription,
+      "date_suggested_by_company": `${date.toDateString()} ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`,
+      "date_closed": "1980-01-01",
+      "date_update": "1980-01-01",
       "date_start": new Date().toISOString(),  // Use ISO string if needed
       "date_create": new Date().toISOString() // Use ISO string if needed
     };
-  
+
     try {
       console.log('Payload Data:', payloadData);
       // Uncomment when ready to call the API
       const response = await fetchData('https://V1servicedeskapi.wello.solutions/api/Task', 'POST', payloadData);
-      
+
       setLoading(false);
       alert('Ticket created successfully!');
 
       if (response) {
         // Post an image using the response id from the ticket creation
         await postImage(response.id, response.id2);
+        navigate(`/ticket/${response.id}`)
       }
-      
+
       // Reset state after submission
       setStep(1); // Reset to the first step
       setSelectedRow(null);
@@ -278,20 +338,23 @@ const CreateTicket = () => {
     try {
       const imagePayload = new FormData();
       const selectedFile = ticketDetails.file;
-      imagePayload.append("file", selectedFile);
-  
+      //imagePayload.append("file", selectedFile);
+      selectedFile.forEach((file, index) => {
+        imagePayload.append(`file${index + 1}`, file);
+      });
+
       const imageResponse = await fetchData(
         `https://V1servicedeskapi.wello.solutions/api/dbfile/add?db_table_id=448260E5-7A17-4381-A254-0B1D8FE53947&id_in_table=${ticketId}&description=Uploaded%20by%20Service%20Desk%20-%20${ticketId2}`,
-         'POST', imagePayload
+        'POST', imagePayload
       );
-  
+
       console.log(imageResponse);
     } catch (err) {
       console.error("Error uploading image:", err);
       alert("Failed to upload image.");
     }
   };
-  
+
 
 
   return (
@@ -386,12 +449,13 @@ const CreateTicket = () => {
             <div className="mt-4 flex justify-between">
               <div className="flex items-center">
                 <input
+                  id="includeArchived"
                   type="checkbox"
                   checked={includeArchived}
                   onChange={() => setIncludeArchived(!includeArchived)}
                   className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                 />
-                <label className="ml-2 block text-sm text-gray-700">Include archived equipment</label>
+                <label htmlFor="includeArchived" className="ml-2 block text-sm text-gray-700">Don't see your equipment? Maybe it has been archived. Check to include archived equipments in your search</label>
               </div>
               <button onClick={handleReset} className="bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-400">
                 Reset
@@ -475,7 +539,7 @@ const CreateTicket = () => {
                   onChange={(e) => handleInputChange('ticketType', e.target.value)}
                   className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                 >
-                  {ticketTypes.map((ticketType, index) => ( 
+                  {ticketTypes.map((ticketType, index) => (
                     <option key={index} value={ticketType.name}> {ticketType.name} </option>
                   ))}
                 </select>
@@ -485,7 +549,7 @@ const CreateTicket = () => {
                   onChange={(e) => handleInputChange('severity', e.target.value)}
                   className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
                 >
-                  {severities.map((severity, index) => ( 
+                  {severities.map((severity, index) => (
                     <option key={index} value={severity.name}> {severity.name} </option>
                   ))}
                 </select>
@@ -494,7 +558,9 @@ const CreateTicket = () => {
 
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <textarea
+              <input
+                type="text"
+                maxLength="150"
                 value={ticketName}
                 onChange={handleNameChange}
                 className="mt-1 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -514,11 +580,47 @@ const CreateTicket = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">Add Pictures and Documents (max 5MB)</label>
               <input
                 type="file"
-                onChange={(e) =>
-                  handleInputChange('file', e.target.files ? e.target.files[0] : null)
-                }
+                multiple
+                ref={fileInputRef}
+                onChange={handleFileChange}
                 className="mt-1 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+              {/* File Thumbnails Grid */}
+              {files.length > 0 && (
+                <div className="mt-2 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  {files.map((file, index) => {
+                    const fileURL = URL.createObjectURL(file);
+                    const isImage = file.type.startsWith("image/");
+                    const isPDF = file.type === "application/pdf";
+
+                    return (
+                      <div key={index} className="relative group w-32 h-auto">
+                        {/* Thumbnail */}
+                        {isImage ? (
+                          <div>
+                            <img src={fileURL} alt="Preview" className="w-32 h-32 object-cover rounded-md overflow-hidden" />
+                            <p className="mt-2 text-sm text-gray-800">{file.name}</p>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-md">
+                            {isPDF ? <FileText className="w-8 h-8 text-gray-600" /> : <File className="w-8 h-8 text-gray-600" />}
+                            <p className="mt-2 text-sm text-gray-800">{file.name}</p>
+                          </div>
+                        )}
+
+                        {/* Remove Icon */}
+                        <button
+                          onClick={() => removeFile(index)}
+                          className="absolute top-1 right-1 bg-white p-1 rounded-full opacity-80 hover:opacity-100 transition-opacity shadow-md"
+                        >
+                          <XCircle className="w-5 h-5 text-red-600" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
             </div>
 
             <div className="mt-4 flex justify-end">
@@ -562,33 +664,34 @@ const CreateTicket = () => {
 
             {/* Calendar Picker */}
             {prefersDate && (
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="flex flex-col lg:flex-row gap-6">
                 <div className="react-calendar-wrapper">
-                  <h4 className='font-semibold mb-4'>{date.toDateString()} {hours.toString().padStart(2, '0')}:{minutes.toString().padStart(2, '0')}</h4>
+                  <h4 className='font-semibold mb-4'>{date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} {hours.toString().padStart(2, '0')}:{minutes.toString().padStart(2, '0')}</h4>
                   <Calendar
                     onChange={setDate}
                     value={date}
+                    minDate={new Date()}
                     className="rounded-lg border border-gray-200 shadow-sm"
                   />
                 </div>
 
                 <div className="flex items-center justify-center gap-4">
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center bg-indigo-500 text-white rounded-t-lg rounded-b-lg">
                     <div
                       onClick={incrementHours}
-                      className="p-1 hover:bg-gray-100 rounded"
+                      className="p-1"
                       aria-label="Increment hours"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                       </svg>
                     </div>
-                    <div className="h-12 w-12 flex items-center justify-center border rounded-md">
+                    <div className="font-bold h-12 w-12 flex items-center justify-center border rounded-md bg-white text-black">
                       {hours.toString().padStart(2, '0')}
                     </div>
                     <div
                       onClick={decrementHours}
-                      className="p-1 hover:bg-gray-100 rounded"
+                      className="p-1"
                       aria-label="Decrement hours"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -599,22 +702,22 @@ const CreateTicket = () => {
 
                   <div className="text-2xl">:</div>
 
-                  <div className="flex flex-col items-center">
+                  <div className="flex flex-col items-center bg-indigo-500 text-white rounded-t-lg rounded-b-lg">
                     <div
                       onClick={incrementMinutes}
-                      className="p-1 hover:bg-gray-100 rounded"
+                      className="p-1"
                       aria-label="Increment minutes"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                       </svg>
                     </div>
-                    <div className="h-12 w-12 flex items-center justify-center border rounded-md">
+                    <div className="font-bold h-12 w-12 flex items-center justify-center border rounded-md bg-white text-black">
                       {minutes.toString().padStart(2, '0')}
                     </div>
                     <div
                       onClick={decrementMinutes}
-                      className="p-1 hover:bg-gray-100 rounded"
+                      className="p-1"
                       aria-label="Decrement minutes"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -646,15 +749,25 @@ const CreateTicket = () => {
             <div>
               <h4 className='font-semibold my-2'>Location</h4>
               <ul className="list-none list-inside text-gray-700">
-                <li>{selectedRow?.db_address_street} {selectedRow?.db_address_city}</li>
+                <li>{selectedRow?.db_address_street}</li>
+                <li>{selectedRow?.db_address_city} {selectedRow?.db_address_zip}</li>
+                <li>{selectedRow?.db_address_country_name}</li>
               </ul>
             </div>
             <div>
               <h4 className='font-semibold my-2'>Ticket description</h4>
               <ul className="list-none list-inside text-gray-700">
-                <li>{ticketDetails.ticketType}</li>
-                <li>{ticketDetails.severity}</li>
-                <li>{ticketDetails.problemDescription}</li>  
+                <li>
+                  <span className={`font-medium me-2 px-1.5 py-0.5 rounded-sm ${ticketType[ticketDetails.ticketType] || "bg-gray-300"}`}>
+                    {ticketDetails.ticketType}
+                  </span>
+                </li>
+                <li>
+                  <span className={`font-medium me-2 ${severityType[ticketDetails.severity] || "text-gray-300"}`}>
+                    {ticketDetails.severity}
+                  </span>
+                </li>
+                <li>{ticketDetails.problemDescription}</li>
               </ul>
             </div>
             <div>
@@ -665,40 +778,45 @@ const CreateTicket = () => {
             </div>
             <div>
               <h4 className='font-semibold my-2'>Select preferred intervention data & time</h4>
-                {prefersDate && (
-                  <>
-                    <ul className="list-none list-inside text-gray-700">
-                      <li>{date.toDateString()} {hours.toString().padStart(2, '0')}:{minutes.toString().padStart(2, '0')}</li>
-                    </ul>
-                  </>
-                )}
+              {prefersDate && (
+                <>
+                  <ul className="list-none list-inside text-gray-700">
+                    <li>{date.toLocaleDateString('nl-BE')} {hours.toString().padStart(2, '0')}:{minutes.toString().padStart(2, '0')}</li>
+                  </ul>
+                </>
+              )}
             </div>
-          
-          <div>
-            <h4 className="font-semibold my-2">File</h4>
-            {ticketDetails?.file ? (
-              isImageFile ? (
-                <img
-                  alt={ticketDetails.file.name || "Uploaded file"}
-                  src={URL.createObjectURL(ticketDetails.file)}
-                  style={{ maxWidth: "150px", maxHeight: "150px" }}
-                />
-              ) : (
-                <div>
-                  <p>{ticketDetails.file.name}</p>
-                  <a
-                    href={URL.createObjectURL(ticketDetails.file)}
-                    download={ticketDetails.file.name}
-                    className="text-blue-500 underline"
-                  >
-                    Download File
-                  </a>
+
+            <div className='col-span-2'>
+              <h4 className="font-semibold my-2">File</h4>
+
+              {/* File Thumbnails Grid */}
+                <div className="mt-2 grid grid-cols-6 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                  {ticketDetails?.file.map((file, index) => {
+                    const fileURL = URL.createObjectURL(file);
+                    const isImage = file.type.startsWith("image/");
+                    const isPDF = file.type === "application/pdf";
+
+                    return (
+                      <div key={index} className="relative group w-40 h-auto">
+                        {/* Thumbnail */}
+                        {isImage ? (
+                          <div>
+                            <img src={fileURL} alt="Preview" className="w-40 h-40 object-cover rounded-md overflow-hidden" />
+                            <p className="mt-2 text-sm text-gray-800">{file.name}</p>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-md">
+                            {isPDF ? <FileText className="w-8 h-8 text-gray-600" /> : <File className="w-8 h-8 text-gray-600" />}
+                            <p className="mt-2 text-sm text-gray-800">{file.name}</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              )
-            ) : (
-              <p>No file uploaded</p>
-            )}
-          </div>
+
+            </div>
           </div>
           <div className="mt-4 flex justify-end">
             <button onClick={handleSubmitTicket} className="bg-green-500 text-white font-semibold py-2 px-4 rounded-md hover:bg-green-600 mr-2">

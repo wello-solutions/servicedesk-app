@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchData } from '../services/apiService';
 import axios from 'axios';
+import JSZip from 'jszip';
 import { useNavigate } from 'react-router-dom';
+import { 
+  FileText, File, FileSpreadsheet, FileImage, FileArchive, FileVideo, FileAudio, FileSignature, Eye 
+} from "lucide-react";
 
 const SingleInstallation = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const { InstallationId } = useParams();
   const [Installation, setInstallation] = useState(null);
   const [doc, setDoc] = useState([]);
@@ -14,6 +18,17 @@ const SingleInstallation = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('details'); // State to manage active tab
+
+  const statusColors = useMemo(() => ({
+    "In Progress": "bg-yellow-500 text-white",
+    "Planned": "bg-blue-500 text-white",
+    "To be Planned": "bg-purple-500 text-white",
+    "Out of production": "bg-orange-500 text-white",
+    "Active": "bg-green-500 text-white",
+    "Ready for Review": "bg-indigo-500 text-white",
+    "Proactive": "bg-red-500 text-white",
+    "Completed": "bg-pink-500 text-white",
+  }), []);
 
   useEffect(() => {
     const getInstallationDetails = async () => {
@@ -37,7 +52,7 @@ const SingleInstallation = () => {
 
     const getInstallationDoc = async () => {
       try {
-        const endpoint_1 = `https://servicedeskapi.wello.solutions/api/DbFileView?$filter=db_table_name+eq+%27project%27+and+id_in_table+eq+${InstallationId}`;
+        const endpoint_1 = `https://v1servicedeskapi.wello.solutions/api/DbFileView?$filter=db_table_name+eq+%27project%27+and+id_in_table+eq+${InstallationId}`;
         const data_1 = await fetchData(endpoint_1, 'GET');
         setDoc(data_1.value);
       } catch (err) {
@@ -48,8 +63,8 @@ const SingleInstallation = () => {
 
     const getInstallationSub = async () => {
       try {
-        const endpoint_2 = `https://servicedeskapi.wello.solutions/api/JobsView/SearchAllJobsLinkToProject`;
-        const payload = {"project_id":"72c67d1d-4b0f-4f21-84a0-d6f50e1eb7f0","year":null,"query_object":{"startRow":0,"endRow":500,"rowGroupCols":[],"valueCols":[],"pivotCols":[],"pivotMode":false,"groupKeys":[],"filterModel":{},"sortModel":[]}}
+        const endpoint_2 = `https://v1servicedeskapi.wello.solutions/api/JobsView/SearchAllJobsLinkToProject`;
+        const payload = { "project_id": "72c67d1d-4b0f-4f21-84a0-d6f50e1eb7f0", "year": null, "query_object": { "startRow": 0, "endRow": 500, "rowGroupCols": [], "valueCols": [], "pivotCols": [], "pivotMode": false, "groupKeys": [], "filterModel": {}, "sortModel": [] } }
         const data_2 = await fetchData(endpoint_2, 'POST', payload);
         setWordOrder(data_2);
         console.log(data_2);
@@ -73,14 +88,14 @@ const SingleInstallation = () => {
         if (!docId) return;
 
         const auth = JSON.parse(sessionStorage.getItem('auth'));
-    
+
         if (!auth || !auth.email || !auth.password || !auth.domain) {
           throw new Error('Invalid or missing authentication data');
         }
-    
+
         const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
         const authKey = btoa(authString);
-    
+
         const config = {
           url: `https://V1servicedeskapi.wello.solutions/api/DbFileView/GetFileThumbnail/?id=${docId}&maxWidth=256&maxHeight=256`,
           method: 'GET',
@@ -90,9 +105,9 @@ const SingleInstallation = () => {
           },
           responseType: 'blob',
         };
-    
+
         const response = await axios(config);
-        const imageObjectURL = URL.createObjectURL(response.data); 
+        const imageObjectURL = URL.createObjectURL(response.data);
         setFile(imageObjectURL);
         console.log(imageObjectURL);
       } catch (err) {
@@ -106,15 +121,99 @@ const SingleInstallation = () => {
     GetFileThumbnail();
   }, [doc]); // Run when `doc` changes
 
+  const handleDownloadAll = async () => {
+    const zip = new JSZip(); // Create a new ZIP instance
+    if (doc.length === 0) return; // Ensure there is data before fetching
+
+    const docId = doc[0]?.id; // Use the first document ID (or adjust as needed)
+    if (!docId) return;
+
+    const auth = JSON.parse(sessionStorage.getItem('auth'));
+
+    if (!auth || !auth.email || !auth.password || !auth.domain) {
+      throw new Error('Invalid or missing authentication data');
+    }
+
+    const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
+    const authKey = btoa(authString);
+
+    try {
+      const url = {
+        url: `https://V1servicedeskapi.wello.solutions/api/DbFileView/GetFileThumbnail/?id=${docId}&maxWidth=256&maxHeight=256`,
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${authKey}`,
+          'Accept': 'image/png',
+        },
+        responseType: 'blob',
+      };
+
+      // Fetch the file content
+      const response = await fetch(url, { method: 'GET' });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch file: ${file.file_name}`);
+      }
+
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+
+      // Add the file to the ZIP archive
+      zip.file(file.file_name || 'file', arrayBuffer);
+    } catch (error) {
+      console.error(`Error fetching file ${file.file_name}:`, error.message);
+    }
+
+    // Generate the ZIP archive and trigger the download
+    zip.generateAsync({ type: 'blob' }).then((content) => {
+      const blobUrl = window.URL.createObjectURL(content);
+
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = 'files.zip'; // Name of the ZIP file
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Revoke the object URL to free up memory
+      window.URL.revokeObjectURL(blobUrl);
+    });
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100">
-    <div className="relative">
-      <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
-      <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
-    </div>
-  </div>;
+      <div className="relative">
+        <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
+        <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
+      </div>
+    </div>;
   }
   if (error) return <div className="text-center text-red-600">{error}</div>;
+
+  const isImage = (fileName) => {
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
+    const ext = fileName?.split('.').pop().toLowerCase();
+    return imageExtensions.includes(ext);
+  };
+  
+  const fileIcons = {
+    pdf: <FileText className="w-32 h-32 text-red-500" />,
+    doc: <FileText className="w-32 h-32 text-blue-500" />,
+    docx: <FileText className="w-32 h-32 text-blue-500" />,
+    xls: <FileSpreadsheet className="w-32 h-32 text-green-500" />,
+    xlsx: <FileSpreadsheet className="w-32 h-32 text-green-500" />,
+    txt: <FileSignature className="w-32 h-32 text-gray-500" />,
+    ppt: <FileText className="w-32 h-32 text-orange-500" />,
+    pptx: <FileText className="w-32 h-32 text-orange-500" />,
+    jpg: <FileImage className="w-32 h-32 text-purple-500" />,
+    jpeg: <FileImage className="w-32 h-32 text-purple-500" />,
+    png: <FileImage className="w-32 h-32 text-purple-500" />,
+    gif: <FileImage className="w-32 h-32 text-purple-500" />,
+    zip: <FileArchive className="w-32 h-32 text-yellow-500" />,
+    rar: <FileArchive className="w-32 h-32 text-yellow-500" />,
+    mp4: <FileVideo className="w-32 h-32 text-blue-500" />,
+    mp3: <FileAudio className="w-32 h-32 text-indigo-500" />,
+  };
 
   return (
     <div className="mx-auto p-6 bg-white">
@@ -128,7 +227,7 @@ const SingleInstallation = () => {
         </button>
         <h2 className="capitalize text-xl font-bold mb-2 ml-4">{Installation?.name} | Reference: {Installation?.id2}</h2>
       </div>
-      
+
       {/* Tab Navigation */}
       <div className="flex space-x-4 border-b border-gray-300 mb-4">
         <button
@@ -153,44 +252,74 @@ const SingleInstallation = () => {
 
       {activeTab === 'details' ? (
         <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='shadow-md rounded-lg p-4 bg-amber-50'>
-              <h4 className="text-lg font-semibold">Equipment</h4>
-              <ul className="list-none list-inside text-gray-700">
-                <li>{Installation?.name}</li>
-              </ul>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold">Equipment</h4>
+            <ul className="list-none list-inside text-gray-700">
+              <li>{Installation?.name}</li>
+              <li>{Installation?.equipment_model_name}</li>
+              <li>{Installation?.equipment_brand_name}</li>
+            </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Type and Status</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>{Installation?.equipment_family_name}</li>
-              <li>{Installation?.project_status_name}</li>
+              <li>
+                <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[Installation?.project_status_name] || "bg-gray-300"}`}>
+                  {Installation?.project_status_name}
+                </span>
+              </li>
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Warranty Info</h4>
             <ul className="list-none list-inside text-gray-700">
-                <li>Build date:{new Date(Installation?.date_built).getFullYear() !== 1980 ?? new Date(Installation?.date_built).toLocaleString()}</li>
-                <li>Commissioning date: {new Date(Installation?.date_start_production).getFullYear() !== 1980 ?? new Date(Installation?.date_start_production).toLocaleString()}</li>
-                <li>End of warranty date: {new Date(Installation?.warranty_date_until).getFullYear() !== 1980 ?? new Date(Installation?.warranty_date_until).toLocaleString()}</li>
-                <li>End of parts warranty date: {new Date(Installation?.replacement_date).getFullYear() !== 1980 ?? new Date(Installation?.replacement_date).toLocaleString()}</li>
+              <li>Build date: <em>{(new Date(Installation?.date_built).getFullYear() !== 1980) ? new Date(Installation?.date_built).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
+              <li>Commissioning date: <em>{(new Date(Installation?.date_start_production).getFullYear() !== 1980) ? new Date(Installation?.date_start_production).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
+              <li>End of warranty date: <em>{(new Date(Installation?.warranty_date_until).getFullYear() !== 1980) ? new Date(Installation?.warranty_date_until).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
+              <li>End of parts warranty date: <em>{(new Date(Installation?.replacement_date).getFullYear() !== 1980) ? new Date(Installation?.replacement_date).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Supplier reference</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>{Installation?.id2}</li>
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Our reference</h4>
             <p className="mb-4">{Installation?.customer_reference}</p>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Serial number and barcode</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>{Installation?.serial_number}</li>
@@ -198,128 +327,165 @@ const SingleInstallation = () => {
             </ul>
           </div>
 
-          <div className='col-span-3 shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='col-span-3 shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Shutdown consequence</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>{Installation?.shutdown_consequence}</li>
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Location</h4>
             <ul className="list-none list-inside text-gray-700">
-                <li>{Installation?.company_name}</li>
-                <li>{Installation?.db_address_street}</li>
-                <li>{Installation?.db_address_zip} {Installation?.db_address_city}</li>
-                {Installation?.contact_mobile && 
-                  <li>{Installation?.contact_mobile}</li>}
+              <li>{Installation?.company_name}</li>
+              <li>{Installation?.db_address_street}</li>
+              <li>{Installation?.db_address_zip} {Installation?.db_address_city}</li>
+              {Installation?.contact_mobile &&
+                <li>{Installation?.contact_mobile}</li>}
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Company address</h4>
             <ul className="list-none list-inside text-gray-700">
-                <li>{Installation?.db_address_street}</li>
-                <li>{Installation?.db_address_zip} {Installation?.db_address_city}</li>
-                {Installation?.contact_mobile && 
-                  <li>{Installation?.contact_mobile}</li>}
+              <li>{Installation?.db_address_street}</li>
+              <li>{Installation?.db_address_zip} {Installation?.db_address_city}</li>
+              {Installation?.contact_mobile &&
+                <li>{Installation?.contact_mobile}</li>}
             </ul>
           </div>
 
-          <div className='shadow-md rounded-lg p-4 bg-amber-50'>
+          <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold">Extra location info</h4>
             <ul className="list-none list-inside text-gray-700">
               <li>{Installation?.total_time_planned}</li>
             </ul>
           </div>
-        </div> 
-      ) : activeTab === 'documents' ? (
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
-          <div className="border border-gray-300 rounded-md bg-gray-50">
-            {file ? (
-              <img src={file} alt="Thumbnail" className="w-full h-auto" />
-            ) : (
-              <p className="text-gray-600 p-4">No document preview available or image could not be loaded.</p>
-            )}
-            {doc.length > 0 && (
-              doc.map(item => (
-                <div key={item.id} className="p-4">
-                  <h3 className="font-bold">{item.name}</h3>
-                  <p className="text-gray-500">{new Date(item.date_add).toLocaleString()}</p>
-                  <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'> 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
-                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z"/>
-                    <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
-                  </svg> View Document
-                  </a>
-                </div>
-              ))
-            )}
-            </div>
         </div>
-      ) : (   
-          <div>
-            {wordOrder ? (
+      ) : activeTab === 'documents' ? (
+        <div>
+        {doc.length > 0 &&
+        <button
+            onClick={handleDownloadAll}
+            className="bg-green-500 text-white px-2 py-1 rounded-md hover:bg-green-600 mb-4"
+          >
+            Download All
+          </button>}
+        <div className='grid grid-cols-1 md:grid-cols-5 gap-4'>
+          <div className="border border-gray-300 rounded-md bg-gray-50">
+            {file && isImage(file) ? (
+                <img src={file} alt="Thumbnail" className="w-full h-auto" />
+            ) : doc.length > 0 ? (
+              doc.map(({ id, name, date_add, file }) => {
+                const fileExtension = name?.split('.').pop().toLowerCase();
+                const fileIcon = fileIcons[fileExtension] || <File className="w-32 h-32 text-gray-500" />;
+
+                return (
+                  <div key={id} className="p-2 items-center space-x-3">
+                    <div className=''>{fileIcon}</div>
+                    <div>
+                      <h3 className="font-bold">{name}</h3>
+                      <p className="text-gray-500">{new Date(date_add).toLocaleString()}</p>
+                      <a
+                        href={file}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center text-blue-600 hover:underline"
+                      >
+                        <Eye className="w-5 h-5 mr-2" />
+                        View Document
+                      </a>
+                    </div>
+                  </div>
+                );
+              })
+            )  : (
+              <p className="text-gray-500 text-center p-4">No files available.</p>
+            )}
+          </div>
+        </div>
+        </div>
+      ) : (
+        <div>
+          {wordOrder ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 border border-gray-300">
                 <thead className="bg-gray-100">
-                    <tr>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Reference
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Type
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          First-scheduled technician
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Status
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Creation Date
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                          Complition Date
-                        </th>
-                    </tr>
+                  <tr>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                      Reference
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                      Type
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                      First-scheduled technician
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                      Status
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                      Creation Date
+                    </th>
+                    <th className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                      Complition Date
+                    </th>
+                  </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                 {wordOrder.map(item => (
-                      <tr className="hover:bg-gray-50">
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            <a href={`/word-order/${item.id}`}>{item.id2}</a>
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {item.project_name}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {item.first_planning_userfullname}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {item.job_status_name}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {new Date(item.dateutc_create).toLocaleString()}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-800">
-                            {new Date(item.dateutc_closed).getFullYear() !== 1980 && new Date(item.dateutc_closed).toLocaleString()}
-                          </td> 
-                      </tr>
-                 ))}
+                  {wordOrder.map(item => (
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-4 py-2 text-sm text-gray-800">
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-800">
+                        <button
+                          onClick={() => navigate(`/word-order/${item.id}}`)}
+                          className="text-blue-800 font-medium me-2 text-left">
+                          {item.id2}
+                        </button>
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-800">
+                        {item.project_name}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-800">
+                        {item.first_planning_userfullname}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-800">
+                        <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[item.job_status_name] || "bg-gray-300"}`}>
+                          {item.job_status_name}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-800">
+                        {new Date(item.dateutc_create).toLocaleString('nl-BE', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </td>
+                      <td className="px-4 py-2 text-sm text-gray-800">
+                        {(new Date(item.dateutc_closed).getFullYear() !== 1980) ? new Date(item.dateutc_closed).toLocaleString('nl-BE', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) : ''}
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
-            ) : (
-              <p className="text-gray-600">No record available.</p>
-            )}
-          </div>
-        
+          ) : (
+            <p className="text-gray-600">No record available.</p>
+          )}
+        </div>
+
       )}
     </div>
   );

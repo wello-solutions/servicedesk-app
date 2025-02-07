@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { fetchData } from '../services/apiService';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const SingleTicket = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const { ticketId } = useParams();
   const [ticket, setTicket] = useState(null);
   const [doc, setDoc] = useState([]);
@@ -13,6 +13,30 @@ const SingleTicket = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('details'); // State to manage active tab
+
+  const statusColors = useMemo(() => ({
+    "In Progress": "bg-yellow-500 text-white",
+    "Planned": "bg-blue-500 text-white",
+    "To be Planned": "bg-purple-500 text-white",
+    "Escalated to WO": "bg-orange-500 text-white",
+    "Open": "bg-green-500 text-white",
+    "Ready for Review": "bg-indigo-500 text-white",
+    "Cancelled": "bg-red-500 text-white",
+    "Completed": "bg-pink-500 text-white",
+  }), []);
+
+  const taskType = useMemo(() => ({
+    "Repair request": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+    "Maintenance": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+    "Installation": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+  }), []);
+
+  const severityType = useMemo(() => ({
+      "Not critical": "text-blue-800 ",
+      "Medium high": "text-orange-800 ",
+      "Critical": "text-red-800 ",
+      "Low": "text-green-800 ",
+    }), []);
 
   useEffect(() => {
     const getTicketDetails = async () => {
@@ -58,14 +82,14 @@ const SingleTicket = () => {
         if (!docId) return;
 
         const auth = JSON.parse(sessionStorage.getItem('auth'));
-    
+
         if (!auth || !auth.email || !auth.password || !auth.domain) {
           throw new Error('Invalid or missing authentication data');
         }
-    
+
         const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
         const authKey = btoa(authString);
-    
+
         const config = {
           url: `https://V1servicedeskapi.wello.solutions/api/DbFileView/GetFileThumbnail/?id=${docId}&maxWidth=256&maxHeight=256`,
           method: 'GET',
@@ -75,9 +99,9 @@ const SingleTicket = () => {
           },
           responseType: 'blob',
         };
-    
+
         const response = await axios(config);
-        const imageObjectURL = URL.createObjectURL(response.data); 
+        const imageObjectURL = URL.createObjectURL(response.data);
         setFile(imageObjectURL);
         //console.log(imageObjectURL);
       } catch (err) {
@@ -93,11 +117,11 @@ const SingleTicket = () => {
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100">
-    <div className="relative">
-      <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
-      <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
-    </div>
-  </div>;
+      <div className="relative">
+        <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
+        <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
+      </div>
+    </div>;
   }
   if (error) return <div className="text-center text-red-600">{error}</div>;
 
@@ -113,7 +137,7 @@ const SingleTicket = () => {
         </button>
         <h2 className="capitalize text-xl font-bold mb-2 ml-4">{ticket?.subject} | Reference: {ticket?.id2}</h2>
       </div>
-      
+
       {/* Tab Navigation */}
       <div className="flex space-x-4 border-b border-gray-300 mb-4">
         <button
@@ -131,38 +155,47 @@ const SingleTicket = () => {
       </div>
 
       {activeTab === 'details' ? (
-          <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-            <div className='shadow-md rounded-lg p-4 '>
-              <h4 className="text-lg font-semibold pb-2">Location and Equipment</h4>
-              <ul className="list-none list-inside text-gray-700">
-                <li>{ticket?.project_name}</li>
-                <li>{ticket?.project_db_address_street}</li>
-                <li>{ticket?.project_db_address_zip} {ticket?.project_db_address_city}</li>
-              </ul>
-            </div>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Location and Equipment</h4>
+            <ul className="list-none list-inside text-gray-700">
+              <li>{ticket?.project_name}</li>
+              <li>{ticket?.project_db_address_street}</li>
+              <li>{ticket?.project_db_address_zip} {ticket?.project_db_address_city}</li>
+            </ul>
+          </div>
 
-            <div className='shadow-md rounded-lg p-4 '>
-              <h4 className="text-lg font-semibold pb-2">Created By</h4>
-              <ul className="list-none list-inside text-gray-700">
-                <li>{ticket?.contact_fullname}</li>
-                <li>{new Date(ticket?.date_update).toLocaleString('nl-BE')}</li>
-              </ul>
-            </div>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Created By</h4>
+            <ul className="list-none list-inside text-gray-700">
+              <li>{ticket?.contact_fullname}</li>
+              <li>{new Date(ticket?.date_update).toLocaleString('nl-BE')}</li>
+            </ul>
+          </div>
 
-            <div className='shadow-md rounded-lg p-4 '>
-              <h4 className="text-lg font-semibold pb-2">Assigned To</h4>
-              <ul className="list-none list-inside text-gray-700">
-                <li>{ticket?.assigned_to_name || 'Not Assigned'}</li>
-              </ul>
-            </div>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Assigned To</h4>
+            <ul className="list-none list-inside text-gray-700">
+              <li>{ticket?.assigned_to_user_fullname?.trim() ? ticket.assigned_to_user_fullname : 'Not Assigned'}</li>
+            </ul>
+          </div>
 
-            <div className='shadow-md rounded-lg p-4 '>
-              <h4 className="text-lg font-semibold pb-2">Type and Status</h4>
-              <ul className="list-none list-inside text-gray-700">
-                <li>{ticket?.task_type_name} - {ticket?.task_priority_name}</li>
-                <li>{ticket?.task_status_description}</li>
-              </ul>
-            </div>
+          <div className='shadow-md rounded-lg p-4 '>
+            <h4 className="text-lg font-semibold pb-2">Type and Status</h4>
+            <ul className="list-none list-inside text-gray-700">
+              <li className='pb-1'>
+                <span className={`font-medium me-2 px-2.5 py-0.5 rounded-sm ${taskType[ticket?.task_type_name] || "bg-gray-300"}`}>
+                  {ticket?.task_type_name}
+                </span>{' - '}
+                <span className={`font-medium me-2 ${severityType[ticket?.task_priority_name] || "text-gray-300"}`}>
+                  {ticket?.task_priority_name}
+                </span>
+              </li>
+              <li><span className={`font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[ticket?.task_status_name] || "bg-gray-300"}`}>
+                {ticket?.task_status_name}
+              </span></li>
+            </ul>
+          </div>
           <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold pb-2">Description</h4>
             <p className="mb-4">{ticket?.remark}</p>
@@ -174,18 +207,24 @@ const SingleTicket = () => {
             {file ? (
               <img src={file} alt="Thumbnail" className="w-full h-auto" />
             ) : (
-              <p className="text-gray-600 p-4">No document preview available or image could not be loaded.</p>
+              <p className="text-gray-600 p-4">No document available.</p>
             )}
             {doc.length > 0 && (
               doc.map(item => (
                 <div key={item.id} className="p-4">
                   <h3 className="font-bold">{item.name}</h3>
-                  <p className="text-gray-500">{new Date(item.date_add).toLocaleString('nl-BE')}</p>
-                  <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'> 
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
-                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z"/>
-                    <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
-                  </svg> View Document
+                  <p className="text-gray-500">{new Date(item.date_add).toLocaleString('nl-BE', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                   })}</p>
+                  <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
+                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z" />
+                      <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+                    </svg> View Document
                   </a>
                 </div>
               ))

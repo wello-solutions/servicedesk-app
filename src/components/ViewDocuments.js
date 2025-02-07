@@ -169,12 +169,12 @@ const ViewDocuments = () => {
     {
       Header: 'Object Name',
       Cell: ({ row }) => (
-        <a
-          href={`./ticket/${row.original.object_id}`}
-          className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400"
+        <button
+          onClick={() =>  navigate(`/ticket/${row.original.object_id}`)}
+          className="text-blue-800 font-medium me-2 text-left"
         >
           {row.original.object_name}
-        </a>
+        </button>
       ),
     },
     { Header: 'File Type', accessor: 'file_extention',
@@ -192,7 +192,7 @@ const ViewDocuments = () => {
             /[^a-zA-Z ]/g,
             ''
           )}?id=${row.original.id}&token=${authKey}`}
-          className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400"
+          className="text-blue-800 font-medium me-2 text-left"
           target="_blank"
           rel="noreferrer"
         >
@@ -200,8 +200,14 @@ const ViewDocuments = () => {
         </a>
       ),
     },
-    { Header: 'Upload When', accessor: 'date_add', Cell: ({ value }) => new Date(value).toLocaleString('nl-BE') },
-  ], [authKey, selectedFiles, fileExtn]);
+    { Header: 'Upload When', accessor: 'date_add', Cell: ({ value }) => new Date(value).toLocaleString('nl-BE', {
+      hour: '2-digit', 
+      minute: '2-digit', 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit'
+    }) },
+  ], [authKey, selectedFiles, fileExtn, navigate]);
 
   const toggleFileSelection = (file) => { 
     setSelectedFiles((prev) =>
