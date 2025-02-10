@@ -7,6 +7,7 @@ const ViewWorkOrderList = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState(null);
   const [selectedTab, setSelectedTab] = useState('open'); // State to track selected tab
 
@@ -28,24 +29,24 @@ const ViewWorkOrderList = () => {
   }), []);
 
   useEffect(() => {
-    const fetchWorkOrder = async () => {
+    const fetchWorkOrder = async (completedStatus) => {
       try {
         //const response = await fetchData('https://v1servicedeskapi.wello.solutions/api/JobsView/', 'GET');
         const endpoint = `https://v1servicedeskapi.wello.solutions/api/JobsView/Search`;
         const payload = {
-          "is_get_completed": false,
+          "is_get_completed": completedStatus,
           "query_object": {
-              "startRow": 0,
-              "endRow": 500,
-              "rowGroupCols": [],
-              "valueCols": [],
-              "pivotCols": [],
-              "pivotMode": false,
-              "groupKeys": [],
-              "filterModel": {},
-              "sortModel": []
+            "startRow": 0,
+            "endRow": 500,
+            "rowGroupCols": [],
+            "valueCols": [],
+            "pivotCols": [],
+            "pivotMode": false,
+            "groupKeys": [],
+            "filterModel": {},
+            "sortModel": []
           }
-      };
+        };
         const response = await fetchData(endpoint, 'POST', payload);
         setJobs(response); // Adjusted for your API's response structure
         setLoading(false);
@@ -55,44 +56,51 @@ const ViewWorkOrderList = () => {
       }
     };
 
-    fetchWorkOrder();
-  }, []);
+    fetchWorkOrder(isCompleted);
+  }, [isCompleted]);
+
 
   const columns = useMemo(
     () => [
-      { Header: 'Planned date', accessor: 'date_create', 
-        Cell: ({ value }) => new Date(value).toLocaleDateString('nl-BE') 
+      {
+        Header: 'Planned date', accessor: 'date_create',
+        Cell: ({ value }) => new Date(value).toLocaleDateString('nl-BE')
       },
-      { Header: 'Status', accessor: 'job_status_name', 
+      {
+        Header: 'Status', accessor: 'job_status_name',
         Cell: ({ row }) => (
-          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.job_status_name] || "bg-gray-300"}`}>
-                {row.original.job_status_name}
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm block text-center ${statusColors[row.original.job_status_name] || "bg-gray-300"}`}>
+            {row.original.job_status_name}
           </span>
         ),
       },
-      { Header: 'Name', accessor: 'name', 
-        Cell: ({ value }) => value.substr(0, 50) 
+      {
+        Header: 'Name', accessor: 'name',
+        Cell: ({ value }) => value.substr(0, 50)
       },
-      { Header: 'Address', accessor: 'db_address_street', 
+      {
+        Header: 'Address', accessor: 'db_address_street',
         Cell: ({ row }) => (
           <span>
             {row.original.db_address_street} {row.original.db_address_city} {row.original.db_address_zip}
           </span>
         ),
       },
-      { Header: 'Reference',
+      {
+        Header: 'Reference',
         Cell: ({ row }) => (
-          <button 
-          onClick={() =>  navigate(`/workorder/${row.original.id}`)}
-          className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
-            {row.original.id2}        
+          <button
+            onClick={() => navigate(`/workorder/${row.original.id}`)}
+            className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
+            {row.original.id2}
           </button>
         ),
-       },
-      { Header: 'Type', accessor: 'job_type_name',
+      },
+      {
+        Header: 'Type', accessor: 'job_type_name',
         Cell: ({ row }) => (
-          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${jobType[row.original.job_type_name] || "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"}`}>
-                {row.original.job_type_name}
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm block text-center ${jobType[row.original.job_type_name] || "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"}`}>
+            {row.original.job_type_name}
           </span>
         ),
       },
@@ -100,17 +108,6 @@ const ViewWorkOrderList = () => {
     [jobType, statusColors, navigate]
   );
 
-  // Filter jobs based on selected tab
-  const filteredWorkOrder = useMemo(() => {
-    return jobs.filter(job => {
-      if (selectedTab === 'open') {
-        return job.job_status_name !== 'Completed' && job.job_status_name !== 'Completed 1' && job.job_status_name !== 'Cancelled'; 
-      } else {
-        return job.job_status_name === 'Completed' || job.job_status_name === 'Completed 1' || job.job_status_name === 'Cancelled'; 
-      }
-    })
-    .sort((a, b) => b.id2 - a.id2);
-  }, [jobs, selectedTab]);
 
   // Create table instance with pagination
   const {
@@ -130,7 +127,7 @@ const ViewWorkOrderList = () => {
   } = useTable(
     {
       columns,
-      data: filteredWorkOrder,
+      data: jobs,
       initialState: { pageIndex: 0, pageSize: 10 }, // Set initial page size to 10
     },
     usePagination
@@ -138,11 +135,11 @@ const ViewWorkOrderList = () => {
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen bg-gray-100">
-    <div className="relative">
-      <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
-      <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
-    </div>
-  </div>;
+      <div className="relative">
+        <div className="w-20 h-20 border-purple-200 border-2 rounded-full"></div>
+        <div className="w-20 h-20 border-purple-700 border-t-2 animate-spin rounded-full absolute left-0 top-0"></div>
+      </div>
+    </div>;
   }
 
   if (error) {
@@ -161,21 +158,31 @@ const ViewWorkOrderList = () => {
         </button>
         <h1 className="text-2xl font-semibold text-gray-800 mb-6 ml-4">Work Order List</h1>
       </div>
-      
+
       {/* Tabs for Open and Completed Jobs */}
       <div className="mb-4">
-        <button 
-          className={`px-4 py-2 mr-2 rounded-md font-semibold ${selectedTab === 'open' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => setSelectedTab('open')}
+        <button
+          className={`px-4 py-2 mr-2 rounded-md font-semibold ${selectedTab === 'open' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'
+            }`}
+          onClick={() => {
+            setSelectedTab('open');
+            setIsCompleted(false); 
+          }}
         >
           Pending
         </button>
-        <button 
-          className={`px-4 py-2 rounded-md font-semibold ${selectedTab === 'completed' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-          onClick={() => setSelectedTab('completed')}
+
+        <button
+          className={`px-4 py-2 rounded-md font-semibold ${selectedTab === 'completed' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'
+            }`}
+          onClick={() => {
+            setSelectedTab('completed');
+            setIsCompleted(true); 
+          }}
         >
           Completed
         </button>
+
       </div>
 
       {/* Table displaying filtered jobs */}
@@ -193,7 +200,7 @@ const ViewWorkOrderList = () => {
             ))}
           </thead>
           <tbody {...getTableBodyProps()} className="bg-white divide-y divide-gray-200">
-            {page.map(row => { // Change from rows to page
+            {!loading && page.map(row => { // Change from rows to page
               prepareRow(row);
               return (
                 <tr {...row.getRowProps()} className="hover:bg-gray-50">
@@ -210,7 +217,7 @@ const ViewWorkOrderList = () => {
       </div>
 
       {/* Pagination Controls - Only show if filteredWorkOrder exceed pageSize (10) */}
-      {filteredWorkOrder.length > 10 && (
+      {jobs.length > 10 && (
         <div className="flex items-center justify-between mt-4">
           <span className="text-sm text-gray-700">
             Page {pageIndex + 1} of {pageOptions.length}

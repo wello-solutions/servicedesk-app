@@ -60,7 +60,7 @@ const ViewTicketList = () => {
       },
       { Header: 'Status', accessor: 'task_status_name', 
         Cell: ({ row }) => (
-          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.task_status_name] || "bg-gray-300"}`}>
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm block text-center ${statusColors[row.original.task_status_name] || "bg-gray-300"}`}>
                 {row.original.task_status_name}
           </span>
         ),
@@ -73,7 +73,7 @@ const ViewTicketList = () => {
       { Header: 'Name', accessor: 'subject' },
       { Header: 'Type', accessor: 'task_type_name',
         Cell: ({ row }) => (
-          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${taskType[row.original.task_type_name] || "bg-gray-300"}`}>
+          <span className={`text-xs font-medium me-2 px-2.5 pb-1 rounded-sm block text-center ${taskType[row.original.task_type_name] || "bg-gray-300"}`}>
                 {row.original.task_type_name}
           </span>
         ),

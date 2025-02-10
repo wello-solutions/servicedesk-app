@@ -31,6 +31,7 @@ const CreateTicket = () => {
   const [includeArchived, setIncludeArchived] = useState(false);
 
   const [ticketName, setTicketName] = useState('');
+  const maxLength = 150;
 
   const [userID, setUserID] = useState();
 
@@ -557,14 +558,17 @@ const CreateTicket = () => {
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <label className="block text-sm font-medium text-gray-700">Name</label>
               <input
                 type="text"
-                maxLength="150"
+                maxLength={maxLength}
                 value={ticketName}
                 onChange={handleNameChange}
                 className="mt-1 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+              <p className="text-sm text-gray-600 mt-1">
+                {maxLength - ticketName.length} characters remaining.
+              </p>
             </div>
 
             <div className="mb-4">

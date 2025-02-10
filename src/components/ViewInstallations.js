@@ -65,7 +65,7 @@ const ViewInstallations = () => {
       {
         Header: 'Status', accessor: 'project_status_name',
         Cell: ({ row }) => (
-          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[row.original.project_status_name] || "bg-gray-300"}`}>
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm block text-center ${statusColors[row.original.project_status_name] || "bg-gray-300"}`}>
             {row.original.project_status_name}
           </span>
         ),

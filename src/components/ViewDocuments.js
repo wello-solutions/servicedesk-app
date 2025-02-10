@@ -62,8 +62,8 @@ const ViewDocuments = () => {
   const [debouncedCity, setDebouncedCity] = useState(city);
 
   const auth = JSON.parse(sessionStorage.getItem('auth'));
-  const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
-  const authKey = btoa(authString);
+  //const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
+  const authKey = auth.authKey;
 
   const fileExtn = useMemo(() => ({
       "PDF": "bg-yellow-500 text-white",

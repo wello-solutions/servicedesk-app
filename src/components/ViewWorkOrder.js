@@ -89,12 +89,7 @@ const SingleWordOrder = () => {
 
         const auth = JSON.parse(sessionStorage.getItem('auth'));
 
-        if (!auth || !auth.email || !auth.password || !auth.domain) {
-          throw new Error('Invalid or missing authentication data');
-        }
-
-        const authString = `${auth.email.trim()}:${auth.password.trim()}@${auth.domain.trim()}`;
-        const authKey = btoa(authString);
+        const authKey = auth.authKey;
 
         const config = {
           url: `https://V1servicedeskapi.wello.solutions/api/DbFileView/GetFileThumbnail/?id=${docId}&maxWidth=256&maxHeight=256`,

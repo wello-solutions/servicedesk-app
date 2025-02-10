@@ -1,11 +1,12 @@
-import React, { createContext, useState, useContext } from 'react';
+import axios from "axios";
+import React, { createContext, useState, useContext } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [auth, setAuth] = useState(() => {
     try {
-      const storedAuth = sessionStorage.getItem('auth');
+      const storedAuth = sessionStorage.getItem("auth");
       return storedAuth ? JSON.parse(storedAuth) : null;
     } catch (error) {
       console.error("Failed to parse auth data from session storage:", error);
@@ -13,15 +14,41 @@ export const AuthProvider = ({ children }) => {
     }
   });
 
-  const login = (domain, email, password) => {
-    const authData = { domain, email, password };
-    setAuth(authData);
-    sessionStorage.setItem('auth', JSON.stringify(authData));
+  const login = async (domain, email, password) => {
+    try {
+      if (!domain || !email || !password) {
+        throw new Error("All fields must be filled out.");
+      }
+
+      const authString = `${email.trim()}:${password.trim()}@${domain.trim()}`;
+      const authKey = btoa(authString);
+
+      const url = `https://V1servicedeskapi.wello.solutions/api/Contact?$filter=e_login+eq+'${encodeURIComponent(email)}'`;
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Basic ${authKey}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (response.data) {
+        const userName = response.data.value[0].firstname+' '+response.data.value[0].lastname;
+        const authData = { authKey, userName };
+        setAuth(authData);
+        sessionStorage.setItem("auth", JSON.stringify(authData));
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      throw new Error("Login failed. Please check your credentials.");
+    }
   };
 
   const logout = () => {
     setAuth(null);
-    sessionStorage.removeItem('auth');
+    sessionStorage.removeItem("auth");
   };
 
   return (

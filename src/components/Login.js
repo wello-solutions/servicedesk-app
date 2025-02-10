@@ -10,6 +10,7 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false)
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (window.welloServiceDesk && window.welloServiceDesk.domain) {
@@ -20,7 +21,7 @@ const Login = () => {
     }
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (rememberMe) {
       localStorage.setItem('rememberedEmail', email);
@@ -28,8 +29,19 @@ const Login = () => {
       localStorage.removeItem('rememberedEmail');
     }
 
-    login(domain, email, password, rememberMe);
-    navigate('/'); // Redirect to home page
+    e.preventDefault();
+    setError(""); // Clear previous errors
+
+    try {
+      const userData = await login(domain, email, password);
+      //console.log("Login successful:", userData);
+      if(userData) {
+        navigate("/");
+      }
+      //navigate("/"); // Redirect after successful login
+    } catch (err) {
+      setError(err.message || "Login failed!");
+    }
   }
 
   return (
@@ -37,6 +49,7 @@ const Login = () => {
         <div className="w-full max-w-md mx-auto">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
             <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-8">Sign in to your account</h2>
+            {error}
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">

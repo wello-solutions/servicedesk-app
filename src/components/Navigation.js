@@ -1,33 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { LayoutDashboard, BadgePlus, LogOut, Ticket, CalendarDays, User, Workflow, NotepadText, FileStack, PackagePlus } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { fetchData } from '../services/apiService.js';
 
 const Navigation = () => {
   const { auth, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState();
-  const [loading, setLoading] = useState(true);
   const dropdownRef = useRef(null); // ref to handle outside click
-
-  useEffect(() => {
-    const fetchContactCount = async () => {
-      const auth = JSON.parse(sessionStorage.getItem('auth'));
-      try {
-        const responseUser = await fetchData(`https://V1servicedeskapi.wello.solutions/api/Contact?$filter=e_login+eq+'${encodeURIComponent(auth.email)}'`, 'GET');
-        setUser(responseUser.value[0]);
-        setLoading(false);
-      } catch (err) {
-        setUser({
-          firstname: 'Guest',
-          lastname: 'User'
-        })
-        setLoading(false);
-      }
-    };
-
-    fetchContactCount();
-  }, []);
 
   useEffect(() => {
     // Close the menu if clicked outside
@@ -41,10 +20,6 @@ const Navigation = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
     <nav className="bg-white" ref={dropdownRef}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,7 +27,7 @@ const Navigation = () => {
           <div className="flex items-center">
             <button
               type="button"
-              className="inline-flex items-center justify-center pe-3 rounded-md text-gray-400"
+              className="inline-flex items-center justify-center pe-3 rounded-md text-gray-900"
               aria-controls="menu"
               aria-expanded={isOpen}
               onClick={() => setIsOpen(!isOpen)}
@@ -86,59 +61,62 @@ const Navigation = () => {
           {auth && (
             <div className="flex items-center">
               <div className="space-y-1">
-                <span className="text-gray-900 px-3 py-2 text-base font-medium">Welcome {user?.firstname} {user?.lastname},</span>
+                <span className="text-gray-900 px-3 py-2 text-base font-medium">Welcome {auth.userName},</span>
+              </div>
+              <div className="space-y-1">
                 <button
                   onClick={logout}
-                  className="text-left px-3 py-2 text-gray-900 text-base font-medium hover:bg-gray-100"
+                  className="flex items-center gap-2 w-full px-3 py-2 font-medium text-gray-900 hover:bg-gray-100"
                 >
-                  Logout
+                  <LogOut className="w-4 h-4" /> Logout
                 </button>
               </div>
             </div>
           )}
         </div>
-      </div>
 
-      {isOpen && (
-        <div
-          className="absolute z-10 px-2 pt-2 pb-3 space-y-1 bg-white shadow-md"
-          id="menu"
-          tabIndex="0"
-          onBlur={() => setIsOpen(false)} // Close menu on blur
-        >
-          <Link to="/" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-            Home
-          </Link>
-          {auth && (
-            <>
-              <Link to="/create" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                Create
-              </Link>
-              <Link to="/tickets" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                Tickets
-              </Link>
-              <Link to="/calendar" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                Calendar
-              </Link>
-              <Link to="/workorders" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                Work Order
-              </Link>
-              <Link to="/users" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                Users
-              </Link>
-              <Link to="/installations" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                Installations
-              </Link>
-              <Link to="/documents" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                Documents
-              </Link>
-              <Link to="/about" className="block text-gray-900 px-3 py-2 rounded-md text-base font-medium">
-                About
-              </Link>
-            </>
-          )}
-        </div>
-      )}
+
+        {isOpen && (
+          <div
+            className="absolute z-10 px-2 pt-2 pb-3 space-y-1 bg-white shadow-md"
+            id="menu"
+            tabIndex="0"
+            onBlur={() => setIsOpen(false)} // Close menu on blur
+          >
+            <Link to="/" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+              <LayoutDashboard className="w-4 h-4" />Home
+            </Link>
+            {auth && (
+              <>
+                <Link to="/create" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                  <BadgePlus className="w-4 h-4" /> Create
+                </Link>
+                <Link to="/tickets" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                  <Ticket className="w-4 h-4" /> Tickets
+                </Link>
+                <Link to="/calendar" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                  <CalendarDays className="w-4 h-4" /> Calendar
+                </Link>
+                <Link to="/workorders" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                  <Workflow className="w-4 h-4" /> Work Order
+                </Link>
+                <Link to="/users" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                  <User className="w-4 h-4" /> Users
+                </Link>
+                <Link to="/installations" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                  <PackagePlus className="w-4 h-4" />Installations
+                </Link>
+                <Link to="/documents" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                  <FileStack className="w-4 h-4" />Documents
+                </Link>
+                <Link to="/about" className="flex items-center gap-2 w-full px-4 py-2 text-gray-900 hover:bg-gray-100">
+                 <NotepadText className="w-4 h-4" />About
+                </Link>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </nav>
   );
 };
