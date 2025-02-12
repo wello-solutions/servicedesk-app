@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, usePagination } from 'react-table';
+import { useTable, useSortBy, usePagination } from 'react-table';
 import { fetchData } from '../services/apiService.js';
 import { useNavigate } from 'react-router-dom';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
@@ -15,19 +16,22 @@ const ViewDocuments = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [downloadMsg, setDownloadMsg] = useState('');
+
   const fileTypesOptions = [
     { value: "documents", label: "Documents", extentions: ["DOC", "DOCX"] },
     { value: "pdf", label: "PDF", extentions: ["PDF"] },
     { value: "formpdf", label: "Form PDF", extentions: ["FORM_PDF"] },
     { value: "approvalpdf", label: "Approval PDF", extentions: ["APPROVAL_PDF"] },
-    { value: "sheet", label: "Sheet", extentions: ["XLS", "XLSX", "CSV"] },
+    { value: "sheet", label: "Sheet XLS", extentions: ["XLS", "XLSX", "CSV"] },
     { value: "text", label: "Text", extentions: ["TXT", "CSV"] },
-    { value: "image", label: "Image", extentions: ["JPG", "PNG", "JPEG", "BMP", "TIFF", "GIF", "TGA"] },
+    { value: "image", label: "Images", extentions: ["JPG", "PNG", "JPEG", "BMP", "TIFF", "GIF", "TGA"] },
     { value: "presentation", label: "Presentation", extentions: ["PPT", "PPTX"] },
     { value: "other", label: "Other", extentions: [] }
   ];
 
   const uniqueDates = [
+    { value: '2025', label: "2025" },
     { value: '2024', label: "2024" },
     { value: '2023', label: "2023" },
     { value: '2022', label: "2022" },
@@ -37,11 +41,11 @@ const ViewDocuments = () => {
   ];
 
   const uniqueObjects = [
-    { value: "you", label: "Upload by you" },
+    { value: "you", label: "Uploaded By You" },
     { value: "company", label: "Company" },
     { value: "task", label: "Task" },
-    { value: "jobs", label: "Jobs" },
-    { value: "project", label: "Project" }
+    { value: "jobs", label: "Work Orders" },
+    { value: "project", label: "Equipment" }
   ];
 
   // Search Filter states
@@ -66,17 +70,17 @@ const ViewDocuments = () => {
   const authKey = auth.authKey;
 
   const fileExtn = useMemo(() => ({
-      "PDF": "bg-yellow-500 text-white",
-      "PNG": "bg-blue-500 text-white",
-      "ZIP": "bg-purple-500 text-white",
-      "TXT": "bg-orange-500 text-white",
-      "DOCX": "bg-green-500 text-white",
-      "DOC": "bg-green-500 text-white",
-      "XLSX": "bg-indigo-500 text-white",
-      "XLS": "bg-indigo-500 text-white",
-      "JPG": "bg-red-500 text-white",
-      "JPEG": "bg-pink-500 text-white",
-    }), []);
+    "PDF": "bg-yellow-500 text-white",
+    "PNG": "bg-blue-500 text-white",
+    "ZIP": "bg-purple-500 text-white",
+    "TXT": "bg-orange-500 text-white",
+    "DOCX": "bg-green-500 text-white",
+    "DOC": "bg-green-500 text-white",
+    "XLSX": "bg-indigo-500 text-white",
+    "XLS": "bg-indigo-500 text-white",
+    "JPG": "bg-red-500 text-white",
+    "JPEG": "bg-pink-500 text-white",
+  }), []);
 
   useEffect(() => {
     const debounceTimer = setTimeout(() => {
@@ -107,6 +111,16 @@ const ViewDocuments = () => {
   }, [city]);
 
   useEffect(() => {
+    if (downloadMsg) {
+      const timer = setTimeout(() => {
+        setDownloadMsg(""); // Clear the message after 1 minute
+      }, 6000); // 60,000 ms = 1 minute
+
+      return () => clearTimeout(timer); // Cleanup on unmount or update
+    }
+  }, [downloadMsg]);
+
+  useEffect(() => {
     const fetchInstallations = async () => {
       try {
         const payload = {
@@ -117,7 +131,13 @@ const ViewDocuments = () => {
           street: debouncedStreet,
           city: debouncedCity,
           added_date: date.length ? date.map((d) => d.value) : date.value,
-          object_list: object.map((obj) => obj.value),
+          object_list: [
+            "company",
+            "task",
+            "jobs",
+            "project",
+            "you"
+        ],
           file_extentions: fileType.reduce((acc, type) => acc.concat(type.extentions), []),
           file_extentions_not_in: [],
           date_add_min: `${date.length ? date.map((d) => d.value) : date.value}-01-01T00:00:00.000`,
@@ -135,7 +155,13 @@ const ViewDocuments = () => {
             valueCols: [],
             pivotCols: [],
             pivotMode: false,
-            groupKeys: ["Upload by you", "Company", "Task", "Jobs", "Project"],
+            groupKeys: object.map((obj) => obj.label) || [
+              "company",
+              "task",
+              "jobs",
+              "project",
+              "you"
+          ],
             filterModel: {},
             sortModel: []
           }
@@ -167,25 +193,47 @@ const ViewDocuments = () => {
     },
     { Header: 'Object', accessor: 'object_type' },
     {
-      Header: 'Object Name',
+      Header: 'Object Name', accessor: 'object_name',
       Cell: ({ row }) => (
         <button
-          onClick={() =>  navigate(`/ticket/${row.original.object_id}`)}
+          onClick={() => {
+            let path;
+            switch (row.original.object_type) {
+              case 'Work Orders':
+                path = `/workorder/${row.original.object_id}`;
+                break;
+              case 'Task':
+                path = `/ticket/${row.original.object_id}`;
+                break;
+              case 'Uploaded By You':
+                path = `/ticket//${row.original.object_id}`;
+                break;
+              case 'Equipment':
+                path = `/installation/${row.original.object_id}`;
+                break;
+              default:
+                path = ' ';
+            }
+            navigate(`${path}`)
+          }}
           className="text-blue-800 font-medium me-2 text-left"
         >
           {row.original.object_name}
         </button>
       ),
     },
-    { Header: 'File Type', accessor: 'file_extention',
-      Cell: ({ row }) => (
-        <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${fileExtn[row.original.file_extention] || "bg-gray-300"}`}>
-              {row.original.file_extention}
-        </span>
-      ),
+    {
+      Header: 'File Type',
+      accessor: 'file_extention',
+      Cell: ({ row }) => 
+        row.original.file_name ? (  // ✅ Check if file_name exists
+          <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${fileExtn[row.original.file_extention] || "bg-gray-300"}`}>
+            {row.original.file_extention}
+          </span>
+        ) : null // ✅ Return null if file_name is missing
     },
     {
-      Header: 'File Name',
+      Header: 'File Name', accessor: 'file_name',
       Cell: ({ row }) => (
         <a
           href={`https://V1servicedeskapi.wello.solutions/api/DbFileView/View/${row.original.file_name.replace(
@@ -200,16 +248,22 @@ const ViewDocuments = () => {
         </a>
       ),
     },
-    { Header: 'Upload When', accessor: 'date_add', Cell: ({ value }) => new Date(value).toLocaleString('nl-BE', {
-      hour: '2-digit', 
-      minute: '2-digit', 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit'
-    }) },
+    {
+      Header: 'Upload When', accessor: 'date_add',
+      Cell: ({ row, value }) => 
+        row.original.file_name ? (
+          new Date(value).getFullYear() !== 1980 ?? new Date(value).toLocaleString('nl-BE', {
+          hour: '2-digit',
+          minute: '2-digit',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        })
+      ) : null
+    },
   ], [authKey, selectedFiles, fileExtn, navigate]);
 
-  const toggleFileSelection = (file) => { 
+  const toggleFileSelection = (file) => {
     setSelectedFiles((prev) =>
       prev.some((f) => f.id === file.id)
         ? prev.filter((f) => f.id !== file.id)
@@ -219,34 +273,36 @@ const ViewDocuments = () => {
 
   const handleDownloadAll = async () => {
     const zip = new JSZip(); // Create a new ZIP instance
-  
+
     for (const file of contacts) {
       try {
         const url = `https://V1servicedeskapi.wello.solutions/api/DbFileView/View/${file.file_name.replace(
           /[^a-zA-Z ]/g,
           ''
         )}?id=${file.id}&token=${authKey}`;
-  
+
         // Fetch the file content
         const response = await fetch(url, { method: 'GET' });
         if (!response.ok) {
           throw new Error(`Failed to fetch file: ${file.file_name}`);
+        } else {
+          setDownloadMsg('All Documents');
         }
-  
+
         const blob = await response.blob();
         const arrayBuffer = await blob.arrayBuffer();
-  
+
         // Add the file to the ZIP archive
         zip.file(file.file_name || 'file', arrayBuffer);
       } catch (error) {
         console.error(`Error fetching file ${file.file_name}:`, error.message);
       }
     }
-  
+
     // Generate the ZIP archive and trigger the download
     zip.generateAsync({ type: 'blob' }).then((content) => {
       const blobUrl = window.URL.createObjectURL(content);
-  
+
       // Create a temporary link element
       const link = document.createElement('a');
       link.href = blobUrl;
@@ -254,7 +310,7 @@ const ViewDocuments = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-  
+
       // Revoke the object URL to free up memory
       window.URL.revokeObjectURL(blobUrl);
     });
@@ -265,9 +321,9 @@ const ViewDocuments = () => {
       alert('No files selected for download.');
       return;
     }
-  
+
     const zip = new JSZip();
-  
+
     try {
       await Promise.all(
         selectedFiles.map(async (file) => {
@@ -275,16 +331,18 @@ const ViewDocuments = () => {
             `https://V1servicedeskapi.wello.solutions/api/DbFileView/View/${file.file_name.replace(
               /[^a-zA-Z ]/g,)}?id=${file.id}&token=${authKey}`
           );
-  
+
           if (!response.ok) {
             throw new Error(`Failed to download ${file.file_name}`);
+          } else {
+            setDownloadMsg('Selected Documents');
           }
-  
+
           const blob = await response.blob();
           zip.file(file.file_name, blob);
         })
       );
-  
+
       const zipBlob = await zip.generateAsync({ type: 'blob' });
       saveAs(zipBlob, 'SelectedFiles.zip');
     } catch (error) {
@@ -292,7 +350,7 @@ const ViewDocuments = () => {
       alert('Failed to download selected files.');
     }
   };
-  
+
 
   const handleReset = () => {
     setKeyword('');
@@ -302,6 +360,7 @@ const ViewDocuments = () => {
     setDate([uniqueDates[0]]);
     setFileType([]);
     setObject([]);
+    toggleFileSelection([]);
     setIncludeArchived(false);
   };
 
@@ -325,6 +384,7 @@ const ViewDocuments = () => {
       data: contacts,
       initialState: { pageIndex: 0, pageSize: 10 },
     },
+    useSortBy,
     usePagination
   );
 
@@ -339,6 +399,24 @@ const ViewDocuments = () => {
 
   if (error) {
     return <div>Error: {error.message}</div>;
+  }
+
+  if (downloadMsg) {
+    return <div id="toast-success" class="flex items-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow-sm" role="alert">
+        <div class="inline-flex items-center justify-center shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200">
+            <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+            </svg>
+            <span class="sr-only">Check icon</span>
+        </div>
+        <div class="ms-3 text-sm font-normal">{downloadMsg} Downloading.</div>
+        <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" data-dismiss-target="#toast-success" aria-label="Close">
+            <span class="sr-only">Close</span>
+            <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+            </svg>
+        </button>
+    </div>;
   }
 
   return (
@@ -432,18 +510,24 @@ const ViewDocuments = () => {
         </div>
         <div className="flex items-end gap-x-2">
           <button onClick={handleReset} className="bg-gray-300 text-black rounded-md px-4 py-2 ml-2">Reset</button>
-          <button
-          onClick={handleDownloadSelected}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-        >
-          Download
-        </button>
-        <button
-          onClick={handleDownloadAll}
-          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600"
-        >
-          Download All
-        </button>
+          {contacts.length !== 0 && (
+            selectedFiles.length !== 0 && (
+              <button
+                onClick={handleDownloadSelected}
+                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+              >
+                Download
+              </button>
+            )
+          )}
+          {contacts.length !== 0 && (
+            <button
+              onClick={handleDownloadAll}
+              className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600"
+            >
+              Download All
+            </button>
+          )}
         </div>
       </div>
 
@@ -454,8 +538,16 @@ const ViewDocuments = () => {
             {headerGroups.map(headerGroup => (
               <tr {...headerGroup.getHeaderGroupProps()}>
                 {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps()} className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                  <th {...column.getHeaderProps(column.getSortByToggleProps())}
+                    className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
                     {column.render('Header')}
+                    {column.isSorted ? (
+                      column.isSortedDesc ? (
+                        <ArrowDown className="inline w-4 h-4 ml-1" />
+                      ) : (
+                        <ArrowUp className="inline w-4 h-4 ml-1" />
+                      )
+                    ) : null}
                   </th>
                 ))}
               </tr>

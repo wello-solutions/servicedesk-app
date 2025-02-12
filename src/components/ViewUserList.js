@@ -12,7 +12,7 @@ const ViewUserList = () => {
   useEffect(() => {
     const fetchContact = async () => {
       try {
-        const response = await fetchData('https://v1servicedeskapi.wello.solutions/api/Contact', 'GET');
+        const response = await fetchData('https://v1servicedeskapi.wello.solutions/api/Contact?$filter=e_login+ne+%27%27', 'GET');
         setContacts(response.value); // Adjusted for your API's response structure
         setLoading(false);
       } catch (err) {
@@ -28,7 +28,17 @@ const ViewUserList = () => {
     () => [
       { Header: 'First Name', accessor: 'firstname' },
       { Header: 'Last Name', accessor: 'lastname' },
-      { Header: 'Email', accessor: 'email' },
+      { Header: 'Email', accessor: 'email',
+        Cell: ({ row }) => (
+          <a
+            href={`mailto:${row.original.email}`}
+            className="text-blue-800 font-medium me-2 text-left"
+            rel="noreferrer"
+          >
+            {row.original.email}
+          </a>
+        ),
+      },
       { Header: 'Tel', accessor: 'mobile' },
     ],
     []

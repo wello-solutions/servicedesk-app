@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, usePagination } from 'react-table';
+import { useTable, useSortBy, usePagination } from 'react-table';
 import { fetchData } from '../services/apiService.js';
 import { useNavigate } from 'react-router-dom';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 const ViewWorkOrderList = () => {
   const navigate = useNavigate();
@@ -76,7 +77,7 @@ const ViewWorkOrderList = () => {
       },
       {
         Header: 'Name', accessor: 'name',
-        Cell: ({ value }) => value.substr(0, 50)
+        Cell: ({ value }) => value.length > 40 ? value.slice(0, 40) + '...' : value
       },
       {
         Header: 'Address', accessor: 'db_address_street',
@@ -87,7 +88,7 @@ const ViewWorkOrderList = () => {
         ),
       },
       {
-        Header: 'Reference',
+        Header: 'Reference', accessor: 'id2',
         Cell: ({ row }) => (
           <button
             onClick={() => navigate(`/workorder/${row.original.id}`)}
@@ -130,7 +131,8 @@ const ViewWorkOrderList = () => {
       data: jobs,
       initialState: { pageIndex: 0, pageSize: 10 }, // Set initial page size to 10
     },
-    usePagination
+    useSortBy,
+    usePagination,
   );
 
   if (loading) {
@@ -192,8 +194,16 @@ const ViewWorkOrderList = () => {
             {headerGroups.map(headerGroup => (
               <tr {...headerGroup.getHeaderGroupProps()}>
                 {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps()} className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
-                    {column.render('Header')}
+                  <th {...column.getHeaderProps(column.getSortByToggleProps())} 
+                  className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                    {column.render("Header")}
+                    {column.isSorted ? (
+                      column.isSortedDesc ? (
+                        <ArrowDown className="inline w-4 h-4 ml-1" />
+                      ) : (
+                        <ArrowUp className="inline w-4 h-4 ml-1" />
+                      )
+                    ) : null}
                   </th>
                 ))}
               </tr>

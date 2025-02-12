@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, usePagination } from 'react-table';
+import { useTable, useSortBy, usePagination } from 'react-table';
 import { fetchData } from '../services/apiService.js';
 import { useNavigate } from 'react-router-dom';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 const ViewTicketList = () => {
   const navigate = useNavigate(); 
@@ -70,7 +71,9 @@ const ViewTicketList = () => {
           row.original.assigned_to_user_fullname?.trim() ? row.original.assigned_to_user_fullname : 'Not Assigned'
         ),
       },
-      { Header: 'Name', accessor: 'subject' },
+      { Header: 'Name', accessor: 'subject', 
+        Cell: ({ value }) => value.length > 150 ? value.slice(0, 150) + '...' : value
+      },
       { Header: 'Type', accessor: 'task_type_name',
         Cell: ({ row }) => (
           <span className={`text-xs font-medium me-2 px-2.5 pb-1 rounded-sm block text-center ${taskType[row.original.task_type_name] || "bg-gray-300"}`}>
@@ -116,6 +119,7 @@ const ViewTicketList = () => {
       data: filteredTickets,
       initialState: { pageIndex: 0, pageSize: 10 }, // Set initial page size to 10
     },
+    useSortBy,
     usePagination
   );
 
@@ -166,8 +170,16 @@ const ViewTicketList = () => {
             {headerGroups.map(headerGroup => (
               <tr {...headerGroup.getHeaderGroupProps()}>
                 {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps()} className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                  <th {...column.getHeaderProps(column.getSortByToggleProps())}
+                  className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
                     {column.render('Header')}
+                    {column.isSorted ? (
+                      column.isSortedDesc ? (
+                        <ArrowDown className="inline w-4 h-4 ml-1" />
+                      ) : (
+                        <ArrowUp className="inline w-4 h-4 ml-1" />
+                      )
+                    ) : null}
                   </th>
                 ))}
               </tr>

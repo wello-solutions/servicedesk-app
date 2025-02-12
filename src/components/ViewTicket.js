@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { fetchData } from '../services/apiService';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { File, FileText, Eye } from "lucide-react";
 
 const SingleTicket = () => {
   const navigate = useNavigate();
@@ -32,11 +33,11 @@ const SingleTicket = () => {
   }), []);
 
   const severityType = useMemo(() => ({
-      "Not critical": "text-blue-800 ",
-      "Medium high": "text-orange-800 ",
-      "Critical": "text-red-800 ",
-      "Low": "text-green-800 ",
-    }), []);
+    "Not critical": "text-blue-800 ",
+    "Medium high": "text-orange-800 ",
+    "Critical": "text-red-800 ",
+    "Low": "text-green-800 ",
+  }), []);
 
   useEffect(() => {
     const getTicketDetails = async () => {
@@ -96,9 +97,9 @@ const SingleTicket = () => {
         };
 
         const response = await axios(config);
-        const imageObjectURL = URL.createObjectURL(response.data);
-        setFile(imageObjectURL);
-        //console.log(imageObjectURL);
+        //const imageObjectURL = URL.createObjectURL(response.data);
+        //setFile(imageObjectURL);
+        setFile(response.data);
       } catch (err) {
         console.error("Error fetching thumbnail:", err);
         setError('Failed to fetch thumbnail.');
@@ -200,26 +201,27 @@ const SingleTicket = () => {
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
           <div className="border border-gray-300 rounded-md bg-gray-50">
             {file ? (
-              <img src={file} alt="Thumbnail" className="w-full h-auto" />
+              file && file.type && file.type?.startsWith('image/') ? (
+                <img src={URL.createObjectURL(file)} alt="Thumbnail" className="w-full h-auto" />
+              ) : file && file.type && file.type === 'application/pdf' ? (
+                <div className="flex items-center justify-center h-40 bg-gray-100 text-gray-600 p-4">
+                  <FileText className="w-32 h-32 text-gray-600" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-40 bg-gray-100 text-gray-600 p-4">
+                  <File className="w-32 h-32 text-gray-600" /> {file}
+                </div>
+              )
             ) : (
               <p className="text-gray-600 p-4">No document available.</p>
             )}
             {doc.length > 0 && (
               doc.map(item => (
                 <div key={item.id} className="p-4">
-                  <h3 className="font-bold">{item.name}</h3>
-                  <p className="text-gray-500">{new Date(item.date_add).toLocaleString('nl-BE', { 
-                    year: 'numeric', 
-                    month: '2-digit', 
-                    day: '2-digit', 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                   })}</p>
+                  <a href={file} target="_blank" rel="noopener noreferrer"><h3 className="font-bold">{item.name}</h3></a>
+                  <p className="text-gray-500">{new Date(item.date_add).toLocaleString()}</p>
                   <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
-                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z" />
-                      <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
-                    </svg> View Document
+                    <Eye className="w-8 h-8 text-gray-600" /> View Document
                   </a>
                 </div>
               ))

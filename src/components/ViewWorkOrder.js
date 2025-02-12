@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { fetchData } from '../services/apiService';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { File, FileText, Eye } from "lucide-react";
 
 const SingleWordOrder = () => {
   const navigate = useNavigate();
@@ -54,7 +55,7 @@ const SingleWordOrder = () => {
 
     const getworkOrderDoc = async () => {
       try {
-        const endpoint_1 = `https://v1servicedeskapi.wello.solutions/api/DbFileView?$filter=db_table_name+eq+%27task%27+and+id_in_table+eq+${workOrderId}`;
+        const endpoint_1 = `https://v1servicedeskapi.wello.solutions/api/DbFileView?$filter=db_table_name+eq+%27jobs%27+and+id_in_table+eq+${workOrderId}`;
         const data_1 = await fetchData(endpoint_1, 'GET');
         setDoc(data_1.value);
       } catch (err) {
@@ -102,9 +103,8 @@ const SingleWordOrder = () => {
         };
 
         const response = await axios(config);
-        const imageObjectURL = URL.createObjectURL(response.data);
-        setFile(imageObjectURL);
-        console.log(imageObjectURL);
+        //const imageObjectURL = URL.createObjectURL(response.data);
+        setFile(response.data);
       } catch (err) {
         console.error("Error fetching thumbnail:", err);
         setError('Failed to fetch thumbnail.');
@@ -147,7 +147,7 @@ const SingleWordOrder = () => {
         >
           Overview
         </button>
-        
+
         <button
           className={`py-2 px-4 font-semibold ${activeTab === 'documents' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
           onClick={() => setActiveTab('documents')}
@@ -155,12 +155,12 @@ const SingleWordOrder = () => {
           Documents
         </button>
         {sub.length > 0 && (
-        <button
-          className={`py-2 px-4 font-semibold ${activeTab === 'sub' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
-          onClick={() => setActiveTab('sub')}
-        >
-          Sub-WO's
-        </button> )}
+          <button
+            className={`py-2 px-4 font-semibold ${activeTab === 'sub' ? 'text-blue-500 border-b-2 border-blue-500' : 'text-gray-600 hover:text-blue-500'}`}
+            onClick={() => setActiveTab('sub')}
+          >
+            Sub-WO's
+          </button>)}
       </div>
 
       {activeTab === 'details' ? (
@@ -193,8 +193,8 @@ const SingleWordOrder = () => {
               <li>
                 <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${jobType[workOrder?.job_type_name] || "bg-gray-300"}`}>
                   {workOrder?.job_type_name}
-                </span> 
-                  - {workOrder?.job_priority_name}
+                </span>
+                - {workOrder?.job_priority_name}
               </li>
               <li>
                 <span className={`text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm ${statusColors[workOrder?.job_status_name] || "bg-gray-300"}`}>
@@ -221,7 +221,34 @@ const SingleWordOrder = () => {
           <div className='shadow-md rounded-lg p-4 '>
             <h4 className="text-lg font-semibold pb-2">Planned date</h4>
             <ul className="list-none list-inside text-gray-700">
-              <li>{new Date(workOrder?.first_planning_date).toLocaleDateString('nl-BE')} {new Date(workOrder?.first_planning_date).getHours('nl-BE')}:{new Date(workOrder?.first_planning_date).getMinutes('nl-BE')}</li>
+              <li><em>{(new Date(workOrder?.first_planning_date).getFullYear() !== 1980) ? new Date(workOrder?.first_planning_date).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
+              <li><em>{(new Date(workOrder?.date_create).getFullYear() !== 1980) ? new Date(workOrder?.date_create).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
+              <li><em>{(new Date(workOrder?.date_update).getFullYear() !== 1980) ? new Date(workOrder?.date_update).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
+              <li><em>{(new Date(workOrder?.first_planning_date).getFullYear() !== 1980) ? new Date(workOrder?.first_planning_date).toLocaleString('nl-BE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : ''}</em></li>
             </ul>
           </div>
 
@@ -236,20 +263,27 @@ const SingleWordOrder = () => {
         <div className='grid grid-cols-1 md:grid-cols-4 gap-4'>
           <div className="border border-gray-300 rounded-md bg-gray-50">
             {file ? (
-              <img src={file} alt="Thumbnail" className="w-full h-auto" />
+              file && file.type && file.type.startsWith('image/') ? (
+                <img src={URL.createObjectURL(file)} alt="Thumbnail" className="w-full h-auto" />
+              ) : file && file.type && file.type === 'application/pdf' ? (
+                <div className="flex items-center justify-center h-40 bg-gray-100 text-gray-600 p-4">
+                  <FileText className="w-32 h-32 text-gray-600" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-40 bg-gray-100 text-gray-600 p-4">
+                  <File className="w-32 h-32 text-gray-600" />
+                </div>
+              )
             ) : (
               <p className="text-gray-600 p-4">No document available.</p>
             )}
             {doc.length > 0 && (
               doc.map(item => (
                 <div key={item.id} className="p-4">
-                  <h3 className="font-bold">{item.name}</h3>
+                  <a href={file} target="_blank" rel="noopener noreferrer"><h3 className="font-bold">{item.name}</h3></a>
                   <p className="text-gray-500">{new Date(item.date_add).toLocaleString()}</p>
                   <a href={file} target="_blank" rel="noopener noreferrer" className='flex items-center'>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-eye" viewBox="0 0 16 16" style={{ marginRight: '5px' }}>
-                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zm-8 4.5A4.5 4.5 0 1 1 8 3.5a4.5 4.5 0 0 1 0 9zm0-1A3.5 3.5 0 1 0 8 4.5a3.5 3.5 0 0 0 0 7z" />
-                      <path d="M8 5a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
-                    </svg> View Document
+                    <Eye className="w-8 h-8 text-gray-600" /> View Document
                   </a>
                 </div>
               ))
@@ -288,7 +322,10 @@ const SingleWordOrder = () => {
                           {item.name}
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-800">
-                          {item.id2}
+                          <span
+                            className="bg-blue-100 text-blue-800 font-medium me-2 px-2.5 py-0.5 rounded-sm border border-blue-400">
+                            {item.id2}
+                          </span>
                         </td>
                         <td className="px-4 py-2 text-sm text-gray-800">
                           {item.job_type_name}

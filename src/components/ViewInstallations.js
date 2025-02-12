@@ -1,7 +1,8 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useTable, usePagination } from 'react-table';
+import { useTable, useSortBy, usePagination } from 'react-table';
 import { fetchData } from '../services/apiService.js';
 import { useNavigate } from 'react-router-dom';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 const ViewInstallations = () => {
   const navigate = useNavigate();
@@ -46,7 +47,7 @@ const ViewInstallations = () => {
   const columns = useMemo(
     () => [
       {
-        Header: 'Name',
+        Header: 'Name', accessor: 'name',
         Cell: ({ row }) => (
           <button
             onClick={() => navigate(`/installation/${row.original.id}`)}
@@ -109,6 +110,7 @@ const ViewInstallations = () => {
       data: filteredContacts,
       initialState: { pageIndex: 0, pageSize: 10 }, // Set initial page size to 10
     },
+    useSortBy,
     usePagination
   );
 
@@ -222,8 +224,16 @@ const ViewInstallations = () => {
             {headerGroups.map(headerGroup => (
               <tr {...headerGroup.getHeaderGroupProps()}>
                 {headerGroup.headers.map(column => (
-                  <th {...column.getHeaderProps()} className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
+                  <th {...column.getHeaderProps(column.getSortByToggleProps())} 
+                  className="px-4 py-2 text-left text-sm font-semibold text-gray-600">
                     {column.render('Header')}
+                    {column.isSorted ? (
+                      column.isSortedDesc ? (
+                        <ArrowDown className="inline w-4 h-4 ml-1" />
+                      ) : (
+                        <ArrowUp className="inline w-4 h-4 ml-1" />
+                      )
+                    ) : null}
                   </th>
                 ))}
               </tr>

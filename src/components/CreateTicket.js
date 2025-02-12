@@ -442,7 +442,9 @@ const CreateTicket = () => {
                 <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                   <option value="All">All</option>
                   {uniqueStatuses.map((status) => (
-                    status && <option key={status} value={status}>{status}</option>
+                    status && <option key={status} value={status}>
+                      {status}
+                    </option>
                   ))}
                 </select>
               </div>
