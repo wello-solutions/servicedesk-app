@@ -1,5 +1,5 @@
 
-![Logo](https://wello.solutions/wp-content/uploads/2023/11/logo-wello.png)
+![Logo](https://wello.solutions/wp-content/uploads/2023/12/logo-wello-white.png)
 
 
 # ServiceDesk React App
